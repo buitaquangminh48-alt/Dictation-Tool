@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EngDictation</title>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 20px;
+        line-height: 1.6;
+        background: #f4f4f9;
+      }
+
+      textarea, input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+
+
+      button {
+        background: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      /*trỏ con chuột vào để  đổi màu*/
+      button:hover { 
+        background: #0056b3;
+      }
+
+      .box {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+      }
+
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+
+      .success {
+        color: green;
+        font-weight: bold;
+      }
+
+      .error {
+        color: red;
+      }
+
+      .missing {
+        color: grey;
+      }
+
+      .highlight {
+        background-color: #ffcccc;
+      }
+
+      .button-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+      }
+      .button-row1 {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+      }
+
+      #next-button {
+        background: grey;
+      }
+
+      #next-button:hover {
+        background: rgb(96, 96, 96);
+      }
+
+      #back-button {
+        background: grey;
+      }
+
+      #back-button:hover {
+        background: rgb(96, 96, 96);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Web luyện nghe chính tả</h1>
+
+    <!-- 1. Ô dán văn bản -->
+    <div id="setup-view" class="box" style="display: block;">
+        <label><b>Dán văn bản vào khung dưới: </b></label>
+        <br></br>
+        <textarea id="source-text" rows="6" placeholder="Ví dụ: Hello. I want to train dictation..."></textarea>
+        <br></br>
+        <button type="button" onclick="startApp()">Bắt đầu luyện nghe</button>
+    </div>
+
+    <!-- 2. Khu vực làm bài tập -->
+    <div id="play-view" class="box" style="display: none;">
+          <h3>
+            Câu số: <span id="current-lines"> 1 </span> / <span id="total-lines"> 0 </span>
+          </h3>
+          <button onclick="speakCurrentSentence()">Nghe lại câu này</button>
+          <p><b>Nghe và gõ lại:</b></p>
+          <input type="text" id="user-input" placeholder="Gõ xong nhớ bấm Enter..." autocomplete="off">
+          <div id="feedback"></div>
+          <div class="button-row">
+            <button type="button" onclick="backToPastePage()">Dán văn bản</button>
+            <div class="button-row1">
+              <button id="back-button" onclick="back()" style="display: none;">
+                <-
+              </button>
+              <button id="next-button" onclick="next()" style="display: none;">
+                ->
+              </button>
+            </div>
+          </div>
+    </div>
+
+    <!-- Script logic -->
+     <script>
+      let sentences = [];
+      let currentIndex = 0;
+
+      //Hàm bắt đầu cắt văn bản thành từng câu
+      function startApp() {
+        let text = document.getElementById("source-text").value.trim();
+        if (!text)
+          return alert("Paste the text please!");
+
+        //Cắt câu dựa vào dấu chấm, chấm than, chấm hỏi
+        sentences = text.split(/[.?!]+/).map(s => s.trim()).filter(s => s.length > 0)
+
+        if (sentences.length === 0)
+          return alert("Sentence is invalid!");
+
+          currentIndex = 0;
+          document.getElementById("total-lines").innerText = sentences.length; //tổng số câu
+          document.getElementById("setup-view").style.display = "none"; //chuyển qua khung luyện nhưng ẩn màn hình setup-view
+          document.getElementById("play-view").style.display = "block"; //chuyển qua khung luyện chỉ hiện màn hình play-view
+          
+          setupQuiz();
+      }
+
+      //Trở về màn hình dán văn bản
+      function backToPastePage() {
+        document.getElementById("setup-view").style.display = "block";
+        document.getElementById("play-view").style.display = "none";
+      }
+
+      //Hàm cài đặt câu hỏi hiện tại
+      function setupQuiz() {
+        document.getElementById("current-lines").innerText = currentIndex + 1;
+        document.getElementById("total-lines").innerText = sentences.length;
+        document.getElementById("user-input").value = "";
+        document.getElementById("user-input").disabled = false;
+        document.getElementById("feedback").innerHTML = "";
+        document.getElementById("back-button").style.display = "none";
+        document.getElementById("next-button").style.display = "none";
+        document.getElementById("user-input").focus();
+
+        speakCurrentSentence();
+      }
+
+      //Hàm đọc câu hiện tại
+      function speakCurrentSentence() {
+        let text = sentences[currentIndex];
+        let utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US'; //chỉnh giọng anh Mỹ
+        window.speechSynthesis.cancel(); //tắt câu cũ nếu đang đọc dở
+        window.speechSynthesis.speak(utterance);
+      }
+
+      //Lắng nghe sự kiện bấm Enter ở ô nhập liệu
+      document.getElementById("user-input").addEventListener("keypress", function(event) {
+        if (event.key === "Enter")
+          checkAnswer(); 
+      });
+
+      //Kiểm tra câu có ghi đúng ko
+      function checkAnswer() {
+        let userAns = document.getElementById("user-input").value.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+        let originalAns = sentences[currentIndex].trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+
+        let feedbackDiv = document.getElementById("feedback");
+
+        if (userAns === originalAns) {
+          feedbackDiv.innerHTML = `<p class="success">${userAns}</p>`;
+          document.getElementById("user-input").disabled = true;
+
+          //next button
+          if (currentIndex < sentences.length - 1) {
+            //hiện back button khi currentIndex > 0
+            if (currentIndex == 0) {
+              document.getElementById("next-button").style.display = "block";
+              document.getElementById("back-button").style.display = "none";
+            } else {
+              document.getElementById("next-button").style.display = "block";
+              document.getElementById("back-button").style.display = "block";
+            }
+          } else {
+            document.getElementById("next-button").style.display = "none";
+            document.getElementById("back-button").style.display = "block";
+          }
+          
+        } else {
+          //hàm so sánh đơn giản
+          let originalWords = sentences[currentIndex].split(" ");
+          let userWords = document.getElementById("user-input").value.split(" ");
+
+          let htmlResult = "";
+          
+          originalWords.forEach((word, index) => {
+            let userWord = userWords[index] || "";
+            
+            //Bỏ dấu khi so sánh từ
+            let cleanWord = word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            let cleanUserWord = userWord.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+
+            //check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu *
+            if (userWord === "") {
+              htmlResult += `<span class="missing"> * </span>`;
+            }
+            else if (cleanWord === cleanUserWord){
+              htmlResult += `<span class="success"> ${userWord} </span>`;
+            } else {
+              htmlResult += `<span class="error"> ${userWord} </span>`;
+            }
+
+          });
+
+          feedbackDiv.innerHTML = `<p>${htmlResult}</p>`;
+
+          speakCurrentSentence(); //đọc lại câu cho nghe 
+        }
+      } 
+      
+      //trở về câu trước
+      function back() {
+        currentIndex--;
+        setupQuiz();
+      }
+
+      //Chuyển qua câu sau
+      function next() {
+        currentIndex++;
+        setupQuiz();
+      }
+     </script>
+  </body>
+</html>
