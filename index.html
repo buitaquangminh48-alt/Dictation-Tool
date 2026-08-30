@@ -162,7 +162,7 @@
         document.getElementById("play-view").style.display = "none";
       }
 
-      //Hàm cài đặt câu hỏi hiện tại
+      //Hàm setup câu hỏi hiện tại
       function setupQuiz() {
         document.getElementById("current-lines").innerText = currentIndex + 1;
         document.getElementById("total-lines").innerText = sentences.length;
@@ -202,50 +202,71 @@
           feedbackDiv.innerHTML = `<p class="success">${userAns}</p>`;
           document.getElementById("user-input").disabled = true;
 
-          //next button
+          //hiện nút đi tiếp hoặc cả 2 nút nếu số câu hiện tại nhỏ hơn số câu đã thêm từ việc dán
           if (currentIndex < sentences.length - 1) {
-            //hiện back button khi currentIndex > 0
+            //nếu là câu đầu thì chỉ in nút đi tiếp
             if (currentIndex == 0) {
               document.getElementById("next-button").style.display = "block";
               document.getElementById("back-button").style.display = "none";
+            //nếu > câu đầu và < số câu đã định thì hiện cả 2 nút
             } else {
               document.getElementById("next-button").style.display = "block";
               document.getElementById("back-button").style.display = "block";
             }
+          //nếu 
           } else {
             document.getElementById("next-button").style.display = "none";
-            document.getElementById("back-button").style.display = "block";
+            document.getElementById("back-button").style.display = "none";
           }
           
         } else {
           //hàm so sánh đơn giản
           let originalWords = sentences[currentIndex].split(" ");
           let userWords = document.getElementById("user-input").value.split(" ");
-
+          let adjustedUserWords = [];
+          let userIndex = 0;
           let htmlResult = "";
           
-          originalWords.forEach((word, index) => {
-            let userWord = userWords[index] || "";
+          for (let i = 0; i < originalWords.length; i++) {
+            let originalWord = originalWords[i].toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+
+            let userWord = userWords[userIndex] || "";
             
-            //Bỏ dấu khi so sánh từ
-            let cleanWord = word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
             let cleanUserWord = userWord.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
 
-            //check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu *
-            if (userWord === "") {
-              htmlResult += `<span class="missing"> * </span>`;
-            }
-            else if (cleanWord === cleanUserWord){
-              htmlResult += `<span class="success"> ${userWord} </span>`;
+            if (originalWords[i+1] && cleanUserWord === originalWords[i+1].toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")) {
+              //Phát hiện user bỏ từ hiện tại
+              adjustedUserWords.push("");
+              //Ko tăng userIndex để từ tiếp theo đc ktr lại
+            } else if (originalWord === cleanUserWord) {
+              // Đúng → giữ lại
+              adjustedUserWords.push(userWord);
+              userIndex++;
             } else {
-              htmlResult += `<span class="error"> ${userWord} </span>`;
+              // Sai → giữ lại luôn
+              adjustedUserWords.push(userWord);
+              userIndex++;
             }
+          };
 
+          adjustedUserWords.forEach((userWord, index) => { 
+            let word = originalWords[index];
+            let cleanWord = word.toLowerCase().replace(/[.,**\\/**#!$%**\\^**&**\\\***;:{}=\\-\_\`\~()]/g,""); 
+            let cleanUserWord = userWord.toLowerCase().replace(/[.,**\\/**#!$%**\\^**&**\\\***;:{}=\\-\_\`\~()]/g,""); 
+
+            //check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu \* 
+            if (cleanUserWord === "") { 
+              htmlResult += `<span class="missing">${"*".repeat(cleanWord.length)}</span>`; 
+            } else if (cleanWord === cleanUserWord) { 
+              htmlResult += `<span class="success"> ${userWord} </span>`; 
+            } else { 
+             htmlResult += `<span class="error"> ${userWord} </span>`; 
+            } 
           });
 
           feedbackDiv.innerHTML = `<p>${htmlResult}</p>`;
 
-          speakCurrentSentence(); //đọc lại câu cho nghe 
+          speakCurrentSentence(); //đọc lại
         }
       } 
       
