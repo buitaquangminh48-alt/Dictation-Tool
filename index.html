@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dictation-Tool</title>
+    <title>Dictation Tool</title>
     <style>
       body {
         font-family: Arial, Helvetica, sans-serif;
@@ -98,28 +98,47 @@
     </style>
   </head>
   <body>
-    <h1>Web luyện nghe chính tả</h1>
+    <h1>Dictation Tool</h1>
 
     <!-- 1. Ô dán văn bản -->
     <div id="setup-view" class="box" style="display: block;">
-        <label><b>Dán văn bản vào khung dưới: </b></label>
+        <label><b>Paste the text into the box below: </b></label>
         <br></br>
-        <textarea id="source-text" rows="6" placeholder="Ví dụ: Hello. I want to train dictation..."></textarea>
+        <textarea id="source-text" rows="6" placeholder="Example: Hello. I want to train dictation..."></textarea>
         <br></br>
-        <button type="button" onclick="startApp()">Bắt đầu luyện nghe</button>
+        <button type="button" onclick="startApp()">Start listening</button>
     </div>
 
     <!-- 2. Khu vực làm bài tập -->
     <div id="play-view" class="box" style="display: none;">
           <h3>
-            Câu số: <span id="current-lines"> 1 </span> / <span id="total-lines"> 0 </span>
+            Sentence: <span id="current-lines"> 1 </span> / <span id="total-lines"> 0 </span>
           </h3>
-          <button onclick="speakCurrentSentence()">Nghe lại câu này</button>
-          <p><b>Nghe và gõ lại:</b></p>
-          <input type="text" id="user-input" placeholder="Gõ xong nhớ bấm Enter..." autocomplete="off">
+          <label>
+            Language:
+          </label>
+          <select id="language-select">
+            <option value="en-US">en-US</option>
+            <option value="en-GB">en-UK</option>
+            <option value="es-ES">es-ES</option>
+            <option value="fr-FR">fr-FR</option>
+            <option value="hi-IN">hi-IN</option>
+            <option value="id-ID">id-ID</option>
+            <option value="it-IT">it-IT</option>
+            <option value="ja-JP">ja-JP</option>
+            <option value="ko-KR">ko-KR</option>
+            <option value="nl-NL">nl-NL</option>
+            <option value="pl-PL">pl-PL</option>
+            <option value="pt-BR">pt-BR</option>
+            <option value="ru-RU">ru-RU</option>
+            <option value="zh-CN">zh-CN</option>
+          </select>
+          <button onclick="speakCurrentSentence()">Listen again</button>
+          <p><b>Listen and rewrite:</b></p>
+          <input type="text" id="user-input" placeholder="Remember to press Enter after typing..." autocomplete="off">
           <div id="feedback"></div>
           <div class="button-row">
-            <button type="button" onclick="backToPastePage()">Dán văn bản</button>
+            <button type="button" onclick="backToPastePage()">Paste text</button>
             <div class="button-row1">
               <button id="back-button" onclick="back()" style="display: none;">
                 <-
@@ -178,10 +197,12 @@
 
       //Hàm đọc câu hiện tại
       function speakCurrentSentence() {
-        let text = sentences[currentIndex];
+        let text = sentences[currentIndex];   
+        let language = document.getElementById("language-select").value; //chọn ngôn ngữ
         let utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US'; //chỉnh giọng anh Mỹ
-        window.speechSynthesis.cancel(); //tắt câu cũ nếu đang đọc dở
+
+        utterance.lang = language; //đổi giọng theo value
+        window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
       }
 
@@ -191,7 +212,7 @@
           checkAnswer(); 
       });
 
-      //Kiểm tra câu có ghi đúng ko
+      //Kiểm tra câu có ghi đúng không
       function checkAnswer() {
         let userAns = document.getElementById("user-input").value.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
         let originalAns = sentences[currentIndex].trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
@@ -213,12 +234,11 @@
               document.getElementById("next-button").style.display = "block";
               document.getElementById("back-button").style.display = "block";
             }
-          //nếu 
+          //nếu end hết bài nghe thì ko hiện nút gì nx
           } else {
             document.getElementById("next-button").style.display = "none";
             document.getElementById("back-button").style.display = "none";
-          }
-          
+          }          
         } else {
           //hàm so sánh đơn giản
           let originalWords = sentences[currentIndex].split(" ");
@@ -227,6 +247,7 @@
           let userIndex = 0;
           let htmlResult = "";
           
+          //check lần 1 (chỉ thêm vô thôi và còn check lại lần 2)
           for (let i = 0; i < originalWords.length; i++) {
             let originalWord = originalWords[i].toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
 
@@ -234,7 +255,8 @@
             
             let cleanUserWord = userWord.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
 
-            if (originalWords[i+1] && cleanUserWord === originalWords[i+1].toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")) {
+            if (originalWords[i+1] && 
+              cleanUserWord === originalWords[i+1].toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")) {
               //Phát hiện user bỏ từ hiện tại
               adjustedUserWords.push("");
               //Ko tăng userIndex để từ tiếp theo đc ktr lại
@@ -249,6 +271,7 @@
             }
           };
 
+          //check lại lần 2 rồi in ra kết quả so sánh
           adjustedUserWords.forEach((userWord, index) => { 
             let word = originalWords[index];
             let cleanWord = word.toLowerCase().replace(/[.,**\\/**#!$%**\\^**&**\\\***;:{}=\\-\_\`\~()]/g,""); 
