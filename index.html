@@ -72,11 +72,13 @@
       .button-row {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         margin-top: 15px;
       }
+
       .button-row1 {
         display: flex;
-        justify-content: space-between;
+        gap: 10px;
         margin-top: 15px;
       }
 
@@ -203,8 +205,22 @@
         document.getElementById("user-input").value = "";
         document.getElementById("user-input").disabled = false;
         document.getElementById("feedback").innerHTML = "";
-        document.getElementById("back-button").style.display = "none";
-        document.getElementById("next-button").style.display = "none";
+        //hiện nút đi tiếp hoặc cả 2 nút nếu số câu hiện tại nhỏ hơn số câu đã thêm từ việc dán
+        if (currentIndex < sentences.length - 1) {
+          //nếu là câu đầu thì chỉ in nút đi tiếp
+          if (currentIndex == 0) {
+            document.getElementById("next-button").style.display = "block";
+            document.getElementById("back-button").style.display = "none";
+          //nếu > câu đầu và < số câu đã định thì hiện cả 2 nút
+          } else {
+            document.getElementById("next-button").style.display = "block";
+            document.getElementById("back-button").style.display = "block";
+          }
+        //nếu end hết bài nghe thì ko hiện nút gì nx
+        } else {
+          document.getElementById("next-button").style.display = "none";
+          document.getElementById("back-button").style.display = "block";
+        }
         document.getElementById("user-input").focus();
 
         speakCurrentSentence();
@@ -245,22 +261,7 @@
           feedbackDiv.innerHTML = `<p class="success">${userAns}</p>`;
           document.getElementById("user-input").disabled = true;
 
-          //hiện nút đi tiếp hoặc cả 2 nút nếu số câu hiện tại nhỏ hơn số câu đã thêm từ việc dán
-          if (currentIndex < sentences.length - 1) {
-            //nếu là câu đầu thì chỉ in nút đi tiếp
-            if (currentIndex == 0) {
-              document.getElementById("next-button").style.display = "block";
-              document.getElementById("back-button").style.display = "none";
-            //nếu > câu đầu và < số câu đã định thì hiện cả 2 nút
-            } else {
-              document.getElementById("next-button").style.display = "block";
-              document.getElementById("back-button").style.display = "block";
-            }
-          //nếu end hết bài nghe thì ko hiện nút gì nx
-          } else {
-            document.getElementById("next-button").style.display = "none";
-            document.getElementById("back-button").style.display = "none";
-          }          
+                    
         } else {
           //hàm so sánh đơn giản
           let originalWords = sentences[currentIndex].split(" ");
