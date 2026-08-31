@@ -114,9 +114,8 @@
           <h3>
             Sentence: <span id="current-lines"> 1 </span> / <span id="total-lines"> 0 </span>
           </h3>
-          <label>
-            Language:
-          </label>
+          <!--Chọn ngôn ngữ-->
+          <label>Language:</label>
           <select id="language-select">
             <option value="en-US">en-US</option>
             <option value="en-GB">en-UK</option>
@@ -133,9 +132,25 @@
             <option value="ru-RU">ru-RU</option>
             <option value="zh-CN">zh-CN</option>
           </select>
+
+          <!--Chọn tốc độ-->
+          <label>Speed:</label>
+          <select id="speed-select">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option> <!--Tốc độ mặc định-->
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="1.75">1.75x</option>
+            <option value="2">2x</option>
+          </select>
+
+          <br>
+
           <button onclick="speakCurrentSentence()">Listen again</button>
           <p><b>Listen and rewrite:</b></p>
-          <input type="text" id="user-input" placeholder="Remember to press Enter after typing..." autocomplete="off">
+          <textarea id="user-input" placeholder="Remember to press Enter after typing..." autocomplete="off"></textarea>
           <div id="feedback"></div>
           <div class="button-row">
             <button type="button" onclick="backToPastePage()">Paste text</button>
@@ -198,10 +213,17 @@
       //Hàm đọc câu hiện tại
       function speakCurrentSentence() {
         let text = sentences[currentIndex];   
-        let language = document.getElementById("language-select").value; //chọn ngôn ngữ
+
+        //chọn ngôn ngữ
+        let language = document.getElementById("language-select").value;
+
+        //chọn tốc độ
+        let speed = document.getElementById("speed-select").value;
+
         let utterance = new SpeechSynthesisUtterance(text);
 
         utterance.lang = language; //đổi giọng theo value
+        utterance.rate = speed; //đổi tốc độ theo value
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
       }
