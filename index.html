@@ -72,12 +72,18 @@
       .button-row {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-top: 15px;
       }
 
       .button-row1 {
         display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 15px;
+      }
+
+      .button-row2 {
+        display: flex;
+        justify-content: right;
         gap: 10px;
         margin-top: 15px;
       }
@@ -104,107 +110,140 @@
 
     <!-- 1. Ô dán văn bản -->
     <div id="setup-view" class="box" style="display: block;">
-        <label><b>Paste the text into the box below: </b></label>
-        <br></br>
-        <textarea id="source-text" rows="6" placeholder="Example: Hello. I want to train dictation..."></textarea>
-        <br></br>
-        <button type="button" onclick="startApp()">Start listening</button>
+      <!--Lưu lại quá trình làm => mở lên là vô câu hiện tại bở dỡ hôm trước-->
+      <p id="saved-progress"></p>
+      <label><b>Paste the text into the box below: </b></label>
+      <br>
+      <!--Ô nhập liệu-->
+      <textarea id="source-text" rows="6" placeholder="Example: Hello. I want to train dictation..."></textarea>
+      <br>
+      <!--Cánh cửa dẫn vào chiến trường đẫm máu-->
+      <button type="button" onclick="startApp()">Start listening</button>
     </div>
 
     <!-- 2. Khu vực làm bài tập -->
     <div id="play-view" class="box" style="display: none;">
-          <h3>
-            Sentence: <span id="current-lines"> 1 </span> / <span id="total-lines"> 0 </span>
-          </h3>
-          <!--Chọn ngôn ngữ-->
-          <label>Language:</label>
-          <select id="language-select">
-            <option value="en-US">en-US</option>
-            <option value="en-GB">en-UK</option>
-            <option value="es-ES">es-ES</option>
-            <option value="fr-FR">fr-FR</option>
-            <option value="hi-IN">hi-IN</option>
-            <option value="id-ID">id-ID</option>
-            <option value="it-IT">it-IT</option>
-            <option value="ja-JP">ja-JP</option>
-            <option value="ko-KR">ko-KR</option>
-            <option value="nl-NL">nl-NL</option>
-            <option value="pl-PL">pl-PL</option>
-            <option value="pt-BR">pt-BR</option>
-            <option value="ru-RU">ru-RU</option>
-            <option value="zh-CN">zh-CN</option>
-          </select>
-
-          <!--Chọn tốc độ-->
-          <label>Speed:</label>
-          <select id="speed-select">
-            <option value="0.25">0.25x</option>
-            <option value="0.5">0.5x</option>
-            <option value="0.75">0.75x</option>
-            <option value="1" selected>1x</option> <!--Tốc độ mặc định-->
-            <option value="1.25">1.25x</option>
-            <option value="1.5">1.5x</option>
-            <option value="1.75">1.75x</option>
-            <option value="2">2x</option>
-          </select>
-
-          <br>
-
-          <button onclick="speakCurrentSentence()">Listen again</button>
-          <p><b>Listen and rewrite:</b></p>
-          <textarea id="user-input" placeholder="Remember to press Enter after typing..." autocomplete="off"></textarea>
-          <div id="feedback"></div>
-          <div class="button-row">
-            <button type="button" onclick="backToPastePage()">Paste text</button>
-            <div class="button-row1">
-              <button id="back-button" onclick="back()" style="display: none;">
-                <-
-              </button>
-              <button id="next-button" onclick="next()" style="display: none;">
-                ->
-              </button>
-            </div>
-          </div>
+      <h3>
+        Sentence: <span id="current-lines"> 1 </span> / <span id="total-lines"> 0 </span>
+      </h3>
+      <!--Chọn ngôn ngữ-->
+      <label>Language:</label>
+      <select id="language-select">
+        <option value="en-US">en-US</option>
+        <option value="en-GB">en-UK</option>
+        <option value="es-ES">es-ES</option>
+        <option value="fr-FR">fr-FR</option>
+        <option value="hi-IN">hi-IN</option>
+        <option value="id-ID">id-ID</option>
+        <option value="it-IT">it-IT</option>
+        <option value="ja-JP">ja-JP</option>
+        <option value="ko-KR">ko-KR</option>
+        <option value="nl-NL">nl-NL</option>
+        <option value="pl-PL">pl-PL</option>
+        <option value="pt-BR">pt-BR</option>
+        <option value="ru-RU">ru-RU</option>
+        <option value="zh-CN">zh-CN</option>
+      </select>
+      <!--Chọn tốc độ-->
+      <label>Speed:</label>
+      <select id="speed-select">
+        <option value="0.25">0.25x</option>
+        <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option> <!--Tốc độ mặc định-->
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+        <option value="1.75">1.75x</option>
+        <option value="2">2x</option>
+      </select>
+      <br>
+      <!--Nghe lại-->
+      <button onclick="speakCurrentSentence()">Listen again</button>
+      <p><b>Listen and rewrite:</b></p>
+      <!--Ô nhập liệu-->
+      <textarea id="user-input" placeholder="Remember to press Enter after typing..." autocomplete="off"></textarea>
+      <!--Check lại câu-->
+      <div id="feedback"></div>
+      <!--Các nút thao tác-->
+      <div class="button-row">
+        <div class="button-row1">
+          <button id="listen-again" onclick="backToSetUpView()">Setup view</button>
+          <button id="replay" onclick="replaySentence()">Replay</button>
+        </div>
+        <div class="button-row2">
+            <button id="back-button" onclick="back()" style="display: none;">
+              <-
+            </button>
+            <button id="next-button" onclick="next()" style="display: none;">
+              ->
+            </button>
+        </div>
+      </div>
     </div>
 
     <!-- Script logic -->
-     <script>
+    <script>
+      //mảng chứa toàn bộ các câu trong bài
       let sentences = [];
-      let currentIndex = 0;
+      //lấy số thứ tự câu đang làm dở lần trước, nếu chưa có thì mặc định bắt đầu từ câu đầu tiên
+      let currentIndex = Number(localStorage.getItem("currentIndex") || 0);
 
-      //Hàm bắt đầu cắt văn bản thành từng câu
+      //Hàm bắt đầu
       function startApp() {
+        //Cắt đoạn văn đã dán thành từng câu riêng lẻ
         let text = document.getElementById("source-text").value.trim();
         if (!text)
-          return alert("Paste the text please!");
+          return alert("Paste the text please!"); //báo lỗi nếu người dùng đéo setup câu
 
         //Cắt câu dựa vào dấu chấm, chấm than, chấm hỏi
-        sentences = text.split(/[.?!]+/).map(s => s.trim()).filter(s => s.length > 0)
+        sentences = text.split(/[.?!]+/).map(s => s.trim()).filter(s => s.length > 0);
 
-        if (sentences.length === 0)
-          return alert("Sentence is invalid!");
+        //lưu lại câu hiện tại để khi reload vẫn quay lại đúng chỗ đang làm
+        localStorage.setItem("currentIndex", currentIndex);
 
-          currentIndex = 0;
-          document.getElementById("total-lines").innerText = sentences.length; //tổng số câu
-          document.getElementById("setup-view").style.display = "none"; //chuyển qua khung luyện nhưng ẩn màn hình setup-view
-          document.getElementById("play-view").style.display = "block"; //chuyển qua khung luyện chỉ hiện màn hình play-view
+        //lưu lại danh sách các câu để có thể khôi phục bài đang làm sau khi reload
+        localStorage.setItem(
+          "sentences",
+          JSON.stringify(sentences)
+        );
+
+        document.getElementById("total-lines").innerText = sentences.length; //tổng số câu
+        document.getElementById("setup-view").style.display = "none"; //chuyển qua khung luyện nhưng ẩn màn hình setup-view
+        document.getElementById("play-view").style.display = "block"; //chuyển qua khung luyện chỉ hiện màn hình play-view
           
-          setupQuiz();
+        setupQuiz();
       }
 
-      //Trở về màn hình dán văn bản
-      function backToPastePage() {
+      //Trở về màn hình setup-view
+      function backToSetUpView() {
         document.getElementById("setup-view").style.display = "block";
         document.getElementById("play-view").style.display = "none";
       }
 
       //Hàm setup câu hỏi hiện tại
-      function setupQuiz() {
+      function setupQuiz(restoreInput = true) {
+        //hiện số câu hiện tại và tổng số câu
         document.getElementById("current-lines").innerText = currentIndex + 1;
         document.getElementById("total-lines").innerText = sentences.length;
-        document.getElementById("user-input").value = "";
+
+        //lấy lại nội dung người dùng đã nhập ở câu hiện tại
+        const savedInput = localStorage.getItem(
+          `userInput-${currentIndex}`
+        );
+        document.getElementById("user-input").value = savedInput || "";
+
+        //nếu cần khôi phục thì hiện lại nội dung cũ, nếu không thì để ô nhập trống
+        if (restoreInput) {
+          document.getElementById("user-input").value = savedInput || "";
+        } else {
+          document.getElementById("user-input").value = "";
+        }
+
+        //Cho phép người dùng nhập văn bản
         document.getElementById("user-input").disabled = false;
+        //Làm trống phần check câu khi mà người dùng chưa bấm Enter sau khi ghi xong
         document.getElementById("feedback").innerHTML = "";
+
         //hiện nút đi tiếp hoặc cả 2 nút nếu số câu hiện tại nhỏ hơn số câu đã thêm từ việc dán
         if (currentIndex < sentences.length - 1) {
           //nếu là câu đầu thì chỉ in nút đi tiếp
@@ -228,6 +267,7 @@
 
       //Hàm đọc câu hiện tại
       function speakCurrentSentence() {
+        //lấy đúng hiện tại
         let text = sentences[currentIndex];   
 
         //chọn ngôn ngữ
@@ -236,10 +276,14 @@
         //chọn tốc độ
         let speed = document.getElementById("speed-select").value;
 
+        //tạo câu đọc bằng giọng máy
         let utterance = new SpeechSynthesisUtterance(text);
 
-        utterance.lang = language; //đổi giọng theo value
-        utterance.rate = speed; //đổi tốc độ theo value
+        //cài ngôn ngữ và tốc độ đọc
+        utterance.lang = language; 
+        utterance.rate = speed; 
+
+        //dừng câu đang đọc trước đó rồi đọc câu hiện tại
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
       }
@@ -254,35 +298,42 @@
       function checkAnswer() {
         let userAns = document.getElementById("user-input").value.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
         let originalAns = sentences[currentIndex].trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-
         let feedbackDiv = document.getElementById("feedback");
 
+        //Hàm so sánh siêu ez
         if (userAns === originalAns) {
           feedbackDiv.innerHTML = `<p class="success">${userAns}</p>`;
-          document.getElementById("user-input").disabled = true;
-
-                    
+          //đéo cho người dùng nhập tiếp nx khi đã bấm enter (trừ khi bấm nút replay)
+          document.getElementById("user-input").disabled = true;       
         } else {
-          //hàm so sánh đơn giản
+          //tách câu gốc và câu người dùng nhập thành từng từ
           let originalWords = sentences[currentIndex].split(" ");
           let userWords = document.getElementById("user-input").value.split(" ");
+
+          //mảng chứa kết quả sau khi căn chỉnh các từ
           let adjustedUserWords = [];
+
+          //vị trí từ đang kiểm tra của người dùng
           let userIndex = 0;
+
+          //lưu kết quả để in ra giao diện
           let htmlResult = "";
           
           //check lần 1 (chỉ thêm vô thôi và còn check lại lần 2)
           for (let i = 0; i < originalWords.length; i++) {
+            //làm sạch câu gốc
             let originalWord = originalWords[i].toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
 
             let userWord = userWords[userIndex] || "";
             
+            //làm sạch câu của người dùng
             let cleanUserWord = userWord.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
 
             if (originalWords[i+1] && 
-              cleanUserWord === originalWords[i+1].toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "")) {
-              //Phát hiện user bỏ từ hiện tại
+                originalWords[i+1].toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "") === cleanUserWord) {
+              //Phát hiện user bỏ hoặc ghi thiếu từ
               adjustedUserWords.push("");
-              //Ko tăng userIndex để từ tiếp theo đc ktr lại
+              //Ko tăng userIndex để từ tiếp theo đc kiểm tra lại
             } else if (originalWord === cleanUserWord) {
               // Đúng → giữ lại
               adjustedUserWords.push(userWord);
@@ -310,23 +361,78 @@
             } 
           });
 
+          //hiển thị kết quả so sánh
           feedbackDiv.innerHTML = `<p>${htmlResult}</p>`;
 
-          speakCurrentSentence(); //đọc lại
+          speakCurrentSentence(); //đọc lại câu để dò xem mình sai hoặc nghe thiếu ở đâu
         }
       } 
       
       //trở về câu trước
       function back() {
         currentIndex--;
+        localStorage.setItem("currentIndex", currentIndex);
         setupQuiz();
       }
 
       //Chuyển qua câu sau
       function next() {
         currentIndex++;
+        localStorage.setItem("currentIndex", currentIndex);
         setupQuiz();
       }
-     </script>
+
+      //Replay lại câu hiện tại
+      function replaySentence() {
+        //làm trống ô nhập liệu
+        userInput.value = "";
+        //bỏ lưu những chữ mà người dùng nhập câu hiện tại và cx để tránh sau này quay lại gặp lại ~ chữ 
+        localStorage.removeItem(`userInput-${currentIndex}`);
+        //làm trống luôn dòng feedback ở dưới
+        document.getElementById("feedback").innerHTML = "";
+        //cho phép người dùng nhập lại
+        userInput.disabled = false;
+        //đưa con trỏ chuột vào ô nhập liệu để viết 
+        userInput.focus();
+      }
+
+      //Lưu lại văn bản dán, văn bản người dùng nhập, ngôn ngữ, tốc độ...
+      const sourceText = document.getElementById("source-text");
+      const userInput = document.getElementById("user-input");
+      const languageSelect = document.getElementById("language-select");
+      const speedSelect = document.getElementById("speed-select");
+
+      //Khôi phục dữ liệu khi mở lại trang
+      sourceText.value = localStorage.getItem("sourceText") || "";
+      languageSelect.value = localStorage.getItem("languageSelect") || languageSelect.value;
+      speedSelect.value = localStorage.getItem("speedSelect") || speedSelect.value;
+      
+
+      //Tự động lưu
+      sourceText.addEventListener("input", () => {
+        localStorage.setItem("sourceText", sourceText.value);
+      });
+
+      userInput.addEventListener("input", () => {
+        localStorage.setItem(
+            `userInput-${currentIndex}`,
+            userInput.value
+        );
+      });
+
+      languageSelect.addEventListener("change", () => {
+          localStorage.setItem("languageSelect", languageSelect.value);
+      });
+
+      speedSelect.addEventListener("change", () => {
+          localStorage.setItem("speedSelect", speedSelect.value);
+      });
+
+      //hiện số câu lúc trước đã dừng trên đầu màn hình setup-view 
+      // để người xem biết luôn lúc trước mình đang ở câu mấy trước khi bắt đầu bấm nút start 
+      const savedProgress = document.getElementById("saved-progress");
+      savedProgress.innerText = `Current sentence: ${currentIndex + 1}`;
+
+    </script>
   </body>
 </html>
