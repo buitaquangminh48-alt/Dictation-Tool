@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dictation Tool</title>
     <style>
+      /* ================================
+         GENERAL LAYOUT
+         ================================= */
+
+      /* Giới hạn chiều rộng app và chân giữa màn hình */
       body {
         font-family: Arial, Helvetica, sans-serif;
         max-width: 600px;
@@ -14,6 +19,7 @@
         background: #f4f4f9;
       }
 
+      /* Input và textarea dùng chung kiểu */
       textarea, input {
         width: 100%;
         padding: 10px;
@@ -24,7 +30,7 @@
         font-size: 14px;
       }
 
-
+      /* Kiểu mặt định cho các button */
       button {
         background: #007bff;
         color: white;
@@ -34,11 +40,12 @@
         cursor: pointer;
       }
 
-      /*trỏ con chuột vào để  đổi màu*/
+      /* Đổi màu khi đưa chuột vào button */
       button:hover { 
         background: #0056b3;
       }
 
+      /* Khung trắng dùng cho các màn hình chính */
       .box {
         background: white;
         padding: 20px;
@@ -47,6 +54,9 @@
         margin-top: 0px;
       }
 
+      /* ================================
+         FEEDBACK
+         ================================= */
       .error {
         color: red;
         font-weight: bold;
@@ -69,15 +79,22 @@
         color: black;
       }
 
+      /* Dùng để highlight một phần text */
       .highlight {
         background-color: #ffcccc;
       }
 
+      /* ================================
+         BUTTON LAYOUT
+         ================================= */   
+         
+      /* Hai nhóm button nằm ở hai phía */
       .button-row {
         display: flex;
         justify-content: space-between;
       }
 
+      /* Nhóm button bên trái */
       .button-row1 {
         display: flex;
         gap: 10px;
@@ -85,6 +102,7 @@
         margin-top: 15px;
       }
 
+      /* Nhóm button bên phải */
       .button-row2 {
         display: flex;
         justify-content: right;
@@ -92,6 +110,8 @@
         margin-top: 15px;
       }
 
+
+      /* Back / Next dùng màu xám để phân biệt với các button thao tác chính */
       #next-button {
         background: grey;
       }
@@ -108,18 +128,36 @@
         background: rgb(96, 96, 96);
       }
 
+      /* ================================
+        SETUP VIEW
+        ================================= */
+
+      /* Textarea tự động cao theo nội dung, không cho người dùng kéo resize */  
       #source-text {
-        overflow-y: hidden; /*dấu thanh cuộn dọc*/
+        overflow-y: hidden; /*giấu thanh cuộn dọc*/
         resize: none; /*Không cho người dùng kéo thủ công*/
       }
 
-      h1 {
+      /* ================================
+        TITLE
+        ================================= */
+
+      /* Căn tiêu đề và hai icon headphone vào giữa */
+      .title {
         display: flex;
         justify-content: center;
+        align-items: center;
+        gap: 10px;
       }
 
+      .title h1 {
+        margin: 0;
+      }
+
+      /* Headphone hai bên tiêu đề được animation lật theo hai hướng khác nhau */
       .headphone1 {
         display: inline-block;
+        font-size: 25px;
         animation: flip-right 2s linear infinite;
       }
 
@@ -139,6 +177,7 @@
 
       .headphone2 {
         display: inline-block;
+        font-size: 25px;
         animation: flip-left 2s linear infinite;
       }
 
@@ -156,11 +195,17 @@
         }
       }
 
+      /* Căn giữa các heading dạng h2 */
       h2 {
         display: flex;
         justify-content: center;
       }
 
+      /* ================================
+        TABS
+        ================================= */
+
+      /* Thanh navigation giữa các View */
       .tabs {
         display: flex;
         border-bottom: 1px solid #ccc;
@@ -168,6 +213,7 @@
         
       }
 
+      /* Style mặc định của tab */
       .tabs button {
         padding: 10px 16px;
         border: 1px solid #ccc;
@@ -181,13 +227,18 @@
         background: #eee;
       }
 
-      /* Tab đang được chọn */
+      /* Tab hiện tại */
       .tabs button.active {
         background: #eee; 
         color: black;
         font-weight: bold;
       }
 
+      /* ================================
+        TRANSCRIPT
+        ================================= */
+
+      /* Một sentence trong Transcript */
       .transcript-sentence {
         justify-content: space-between;
         align-items: flex-start;  
@@ -198,11 +249,13 @@
         overflow-wrap: break-word;
       } 
 
+      /* Cho phép câu dài tự xuống dòng, tránh làm vỡ layout */
       .transcript-sentence span {
         min-width: 0;
         overflow-wrap: break-word;
       }
 
+      /* Button 🔊 / 🎙️ / Replay trong Transcript */
       .transcript-sentence button {
         flex-shrink: 0;
         margin-left: 10px;
@@ -220,12 +273,18 @@
         align-items: flex-start;
       }
 
+      /* ================================
+        PRONUNCIATION
+        ================================= */
+
+      /* Khung pronunciation hiện bên dưới sentence */
       .pronunciation-box {
         margin-top: 12px;
         padding: 12px;
         border-top: 1px solid #ccc;
       }
 
+      /* Ô nhận kết quả từ Speech Recognition */
       .pronunciation-box textarea {
         width: 100%;
         min-height: 60px;
@@ -233,25 +292,226 @@
         box-sizing: border-box;
       }
 
+      /* ================================
+        APP TITLE EFFECT
+        ================================= */
+
+      /* Hiệu ứng cầu vồng chạy trên chữ DICTATION-TOOL */
+      .dictation-tool {
+        font-size: 32px;
+        font-weight: bold;
+
+        background: linear-gradient(
+          180deg,
+          red,
+          orange,
+          yellow,
+          lime,
+          cyan,
+          blue,
+          violet,
+          red
+        );
+
+        background-size: 100% 400%;
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+
+        animation: neonRainbow 7s linear infinite;
+
+        text-shadow: 
+          0 0 5px rgba(255,255,255,0.5),
+          0 0 10px rgba(0,255,255,0.4),
+          0 0 20px rgba(255,0,255,0.3);
+      }
+
+      /* Di chuyển gradient để tạo hiệu ứng rainbow */
+      @keyframes neonRainbow {
+        0% {
+          background-position: 0% 0%;
+        }
+        100% {
+          background-position: 0% 400%;
+        }
+      }
+
+      /* ================================
+        CREATE TEXT
+        ================================= */
+
+      /* Search + Sort + Create button nằm trên cùng một hàng */
+      .search-sort-create {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      /* Khu vực search */
+      .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .search-bar input {
+        width: 150px;
+        height: 25px;
+      }
+
+      /* Button tạo text mới */
+      .create-new-text button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        width: 35px;
+        height: 35px;
+        
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        
+        cursor: pointer;
+      }
+
+      /* Header Create Text luôn nằm trên cùng khi danh sách text được scroll */
+      .create-text-header {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+        padding: 10px 0;
+      }
+
+      /* ================================
+        CREATE TEXT POPUP
+        ================================= */
+
+      /* Lớp nền phủ toàn màn hình phía sau popup */
+      .popup {
+        position: fixed;
+        inset: 0;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        background: rgba(0, 0, 0, 0.5);
+
+        /* Đảm bảo popup nằm trên các thành phần khác */
+        z-index: 1000;
+      }
+
+      
+      /* Nội dung bên trong popup */
+      .popup-content {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        width: 300px;
+      }
+
+      /* ================================
+        TEXT OBJECT LIST
+        ================================= */
+
+      /* Một text object trong danh sách */
+      .text-item {
+        display: flex;
+        align-items: baseline;
+        justify-content: left;
+        gap: 275px;
+
+        padding: 12px, 15px;
+        margin-top: 10px;
+
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+
+      /* Phần thông tin text có thể click để mở */
+      .text-info {
+        cursor: pointer;
+      }
+
+      /* Button xóa text */
+      .delete-text {
+        background: white;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+      }
+
     </style>
   </head>
   <body>
 
-    <h1>
-      <span class="headphone1">🎧</span>
-      DICTATION-TOOL
+    <div class="title">
+      <span class="headphone1">🎧</span> 
+      <h1 class="dictation-tool">DICTATION-TOOL</h1>
       <span class="headphone2">🎧</span>
-    </h1>
+    </div>
 
     <div class="tabs">
+      <button id="create-text-tab" onclick=createText()>Create Text</button>
       <button id="setup-tab" onclick=backToSetUpView()>Setup View</button>
       <button id="play-tab" onclick=startApp()>Play View</button>
       <button id="transcript-tab" onclick=transcript()>Transcript</button>
     </div>
 
-    <!-- 1. Ô dán văn bản -->
-    <div id="setup-view" class="box" style="display: block;">
+    <!-- 1. Create Text -->
+    <div id="create-text-view" class="box" style="display: block;">
+      <div class="create-text-header">
+        <h2>Create Text</h2>
+
+        <div class="search-sort-create">
+
+          <div class="search-bar">
+            <span>🔍</span> 
+            <input id="search-input" type="text" placeholder="Search..." oninput="renderTextList()">
+          </div>
+
+          <div class="sort-items">
+            <span>↕️</span>
+            <select id="select-sort" onchange=renderTextList()>
+              <option value="a-z">A-Z</option>
+              <option value="z-a">Z-A</option>
+              <option value="latest" selected>Latest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+          </div>
+
+          <div class="create-new-text" onclick=openCreateTextPopup()>
+            <button>➕</button>
+          </div>
+
+          <div id="create-text-popup" class="popup" style="display: none;">
+            <div class="popup-content">
+                <h3>Create New Text</h3>
+
+                <input type="text" id="new-text-name" placeholder="Text name...">
+                
+                <div>
+                  <button onclick=closeCreateTextPopup()>Cancel</button>
+                  <button onclick=createNewText()>Create</button>
+                </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Danh sách các text object-->
+      <div id="text-list"></div>
+
+    </div>
+
+    <!-- 2. Ô dán văn bản -->
+    <div id="setup-view" class="box" style="display: none;">
       <h2>SETUP VIEW</h2>
+      <!--Hiện tên text-->
+      <h4 id="text-name"></h4>
       <!--Lưu lại quá trình làm => mở lên là vô câu hiện tại bở dỡ hôm trước-->
       <p id="saved-progress"></p>
       <label><b>Paste the text into the box below: </b></label>
@@ -263,7 +523,7 @@
       <button type="button" onclick="startApp()">Start listening</button>
     </div>
 
-    <!-- 2. Khu vực làm bài tập -->
+    <!-- 3. Khu vực làm bài tập -->
     <div id="play-view" class="box" style="display: none;">
       <h2>PLAY VIEW</h2>
       <h3>
@@ -325,6 +585,7 @@
       </div>
     </div>
 
+    <!-- 4. Transcript -->
     <div id="transcript-view" class="box" style="display: none">
       <h2>Transcript</h2>
 
@@ -333,23 +594,187 @@
 
     <!-- Script logic -->
     <script>
+
+      // ================================
+      // 1. DATA / STATE
+      // ================================
+
       //mảng chứa toàn bộ các câu trong bài
       let sentences = [];
-      //lấy số thứ tự câu đang làm dở lần trước, nếu chưa có thì mặc định bắt đầu từ câu đầu tiên
-      let currentIndex = Number(localStorage.getItem("currentIndex") || 0);
+
+      //mảng chứa toàn bộ những texts đã tạo trong bài
+      let texts = JSON.parse(localStorage.getItem("texts")) || [];
+
+      //ID text hiện tại
+      let currentTextId = Number(localStorage.getItem("currentTextId")) || null;
+
+      //hàm lấy số thứ tự câu đang làm dở lần trước (trong mỗi text riêng), nếu chưa có thì mặc định bắt đầu từ câu đầu tiên
+      function getCurrentText() {
+        return texts.find(text => text.id === currentTextId);
+      }
+
+
+
+
+
+
+      // ================================
+      // 2. DOM ELEMENTS
+      // ================================
+
+      //Lưu lại văn bản dán, văn bản người dùng nhập, ngôn ngữ, tốc độ, tên text...
+      const sourceText = document.getElementById("source-text");
+      const userInput = document.getElementById("user-input");
+      const languageSelect = document.getElementById("language-select");
+      const speedSelect = document.getElementById("speed-select");
+      const textName = document.getElementById("text-name");
+
+      //Tự động lưu (cx ở mỗi text riêng)
+      sourceText.addEventListener("input", () => {
+        const currentText = getCurrentText();
+
+        if (!currentText) 
+          return;
+
+        currentText.content = sourceText.value;
+
+        localStorage.setItem("texts", JSON.stringify(texts));
+      });
+
+      userInput.addEventListener("input", () => {
+        const currentText = getCurrentText();
+
+        if(!currentText) return;
+
+        userInput.style.height = "auto";
+        userInput.style.height = userInput.scrollHeight + "px";
+
+        localStorage.setItem(
+            `userInput-${currentTextId}-${currentText.currentIndex}`,
+            userInput.value
+        );
+      });
+
+      languageSelect.addEventListener("change", () => {
+          localStorage.setItem("languageSelect", languageSelect.value);
+      });
+
+      speedSelect.addEventListener("change", () => {
+          localStorage.setItem("speedSelect", speedSelect.value);
+      });
+
+
+
+
+
+      // ================================
+      // 3. INITIALIZATION
+      // ================================
+
+      //Khôi phục dữ liệu khi mở lại trang (ở mỗi text riêng)
+      sourceText.value = localStorage.getItem("sourceText") || "";
+      languageSelect.value = localStorage.getItem("languageSelect") || languageSelect.value;
+      speedSelect.value = localStorage.getItem("speedSelect") || speedSelect.value;
+
+
+      //hiển thị danh sách các object đã tạo khi vừa mới vô trang
+      renderTextList();
+
+      //đổi màu tab để biết mình đang ở tab nào khi vừa vào trang
+      setActiveTab(document.getElementById("create-text-tab")); 
+
+
+
+
+
+      // ================================
+      // 4. SETUP VIEW
+      // ================================
+
+      //hàm cập nhật tên text (tên object hiện tại) khi chọn object nào đó
+      function updateSetupTextName() {
+        const currentText = texts.find(text => text.id === currentTextId);
+
+        if (!currentText) {
+            textName.innerText = "";
+            return;
+        }
+
+        textName.innerText = `Text name: ${currentText.name}`;
+      }
+
+      //hàm lưu lại văn bản trong ô dán văn bản ở setup-view cho mỗi text đc tạo ra
+      function loadCurrentText() {
+        const currentText = texts.find(text => text.id === currentTextId);
+
+        if (!currentText) {
+          sourceText.value = "";
+          return;
+        }
+
+        sourceText.value = currentText.content || "";
+      }
+
+      //Trở về màn hình setup-view
+      function backToSetUpView() {
+
+        //kiểm tra xem đã có text object nào chưa
+        if (texts.length === 0) {
+          alert("Please create a text object first!");
+          return;
+        }
+
+        //hiện số câu lúc trước đã dừng trên đầu màn hình setup-view 
+        // để người xem biết luôn lúc trước mình đang ở câu mấy trước khi bắt đầu bấm nút start 
+        const savedProgress = document.getElementById("saved-progress");
+        const currentText = getCurrentText();
+        if (currentText) {
+          savedProgress.innerText = `Current sentence: ${currentText.currentIndex + 1}`;
+        }
+
+        //cập nhật tên text hiện tại
+        updateSetupTextName();
+
+        //dùng đoạn dán riêng cho mỗi text đc tạo
+        loadCurrentText();
+
+        document.getElementById("setup-view").style.display = "block";
+        document.getElementById("play-view").style.display = "none";
+        document.getElementById("transcript-view").style.display = "none";
+        document.getElementById("create-text-view").style.display = "none";
+
+        //thay đổi nút tab khi đc chọn
+        setActiveTab(document.getElementById("setup-tab"));
+      }
+
+
+
+
+
+      // ================================
+      // 5. PLAY VIEW
+      // ================================
 
       //Hàm bắt đầu
       function startApp() {
+        const currentText = getCurrentText();
+
+        if (!currentText) return;
+
         //Cắt đoạn văn đã dán thành từng câu riêng lẻ
-        let text = document.getElementById("source-text").value.trim();
+        let text = currentText.content.trim();
         if (!text)
           return alert("Paste the text please!"); //báo lỗi nếu người dùng đéo setup câu
+
 
         //Cắt câu dựa vào dấu chấm, chấm than, chấm hỏi
         sentences = text.split(/[.?!]+/).map(s => s.trim()).filter(s => s.length > 0);
 
-        //lưu lại câu hiện tại để khi reload vẫn quay lại đúng chỗ đang làm
-        localStorage.setItem("currentIndex", currentIndex);
+        //lưu lại câu hiện tại để khi reload hay tắt mở lại vẫn quay lại đúng chỗ đang làm (ở mỗi text riêng)
+        currentText.currentIndex = Math.min(
+          currentText.currentIndex,
+          Math.max(sentences.length - 1, 0)
+        );
 
         //lưu lại danh sách các câu để có thể khôi phục bài đang làm sau khi reload
         localStorage.setItem(
@@ -361,6 +786,7 @@
         document.getElementById("setup-view").style.display = "none"; //chuyển qua khung luyện nhưng ẩn màn hình setup-view
         document.getElementById("transcript-view").style.display = "none";
         document.getElementById("play-view").style.display = "block"; //chuyển qua khung luyện chỉ hiện màn hình play-view
+        document.getElementById("create-text-view").style.display = "none";
         
         //thay đổi nút tab khi đc chọn
         setActiveTab(document.getElementById("play-tab"));
@@ -368,25 +794,19 @@
         setupQuiz();
       }
 
-      //Trở về màn hình setup-view
-      function backToSetUpView() {
-        document.getElementById("setup-view").style.display = "block";
-        document.getElementById("play-view").style.display = "none";
-        document.getElementById("transcript-view").style.display = "none";
-
-        //thay đổi nút tab khi đc chọn
-        setActiveTab(document.getElementById("setup-tab"));
-      }
-
       //Hàm setup câu hỏi hiện tại
       function setupQuiz(restoreInput = true) {
+        const currentText = getCurrentText();
+
+        if (!currentText) return;
+
         //hiện số câu hiện tại và tổng số câu
-        document.getElementById("current-lines").innerText = currentIndex + 1;
+        document.getElementById("current-lines").innerText = currentText.currentIndex + 1;
         document.getElementById("total-lines").innerText = sentences.length;
 
         //lấy lại nội dung người dùng đã nhập ở câu hiện tại
         const savedInput = localStorage.getItem(
-          `userInput-${currentIndex}`
+          `userInput-${currentTextId}-${currentText.currentIndex}`
         );
         document.getElementById("user-input").value = savedInput || "";
 
@@ -403,13 +823,13 @@
         document.getElementById("feedback").innerHTML = "";
 
         //hiện nút đi tiếp hoặc cả 2 nút nếu số câu hiện tại nhỏ hơn số câu đã thêm từ việc dán
-        if (currentIndex == 0 && sentences.length - 1  == 0) { //nếu chỉ có 1 câu thì khỏi hiện nút back vs next luôn
+        if (currentText.currentIndex == 0 && sentences.length - 1  == 0) { //nếu chỉ có 1 câu thì khỏi hiện nút back vs next luôn
           document.getElementById("next-button").style.display = "none";
           document.getElementById("back-button").style.display = "none";
         } else {
-          if (currentIndex < sentences.length - 1) {
+          if (currentText.currentIndex < sentences.length - 1) {
             //nếu là câu đầu thì chỉ in nút đi tiếp
-            if (currentIndex == 0) {
+            if (currentText.currentIndex == 0) {
               document.getElementById("next-button").style.display = "block";
               document.getElementById("back-button").style.display = "none";
             //nếu > câu đầu và < số câu đã định thì hiện cả 2 nút
@@ -428,10 +848,14 @@
         speakCurrentSentence();
       }
 
-      //Hàm đọc câu hiện tại
-      function speakCurrentSentence(index = currentIndex) {
+      //Hàm đọc câu hiện tại (trong play-view)
+      function speakCurrentSentence() {
+        const currentText = getCurrentText();
+
+        if (!currentText) return;
+
         //lấy đúng hiện tại
-        let text = sentences[index];   
+        let text = sentences[currentText.currentIndex];   
 
         //chọn ngôn ngữ
         let language = document.getElementById("language-select").value;
@@ -459,8 +883,12 @@
 
       //Kiểm tra câu có ghi đúng không
       function checkAnswer() {
+        const currentText = getCurrentText();
+
+        if (!currentText) return;
+
         let userAns = document.getElementById("user-input").value.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-        let originalAns = sentences[currentIndex].trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+        let originalAns = sentences[currentText.currentIndex].trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
         let feedbackDiv = document.getElementById("feedback");
 
         //Hàm so sánh siêu ez
@@ -470,7 +898,7 @@
           document.getElementById("user-input").disabled = true;       
         } else {
           //tách câu gốc và câu người dùng nhập thành từng từ
-          let originalWords = sentences[currentIndex].split(" ");
+          let originalWords = sentences[currentText.currentIndex].split(" ");
           let userWords = document.getElementById("user-input").value.split(" ");
 
           //mảng chứa kết quả sau khi căn chỉnh các từ
@@ -530,42 +958,79 @@
           speakCurrentSentence(); //đọc lại câu để dò xem mình sai hoặc nghe thiếu ở đâu
         }
       } 
-      
-      //trở về câu trước
-      function back() {
-        currentIndex--;
-        localStorage.setItem("currentIndex", currentIndex);
-        setupQuiz();
-      }
 
-      //Chuyển qua câu sau
-      function next() {
-        currentIndex++;
-        localStorage.setItem("currentIndex", currentIndex);
-        setupQuiz();
-      }
-
-      //Replay lại câu hiện tại
+      //Replay lại câu hiện tại đã viết
       function replaySentence() {
+        const currentText = getCurrentText();
+
+        if (!currentText) return;
+
         //làm trống ô nhập liệu
         userInput.value = "";
+
         //bỏ lưu những chữ mà người dùng nhập câu hiện tại và cx để tránh sau này quay lại gặp lại ~ chữ 
-        localStorage.removeItem(`userInput-${currentIndex}`);
+        localStorage.removeItem(`userInput-${currentTextId}-${currentText.currentIndex}`);
+
         //làm trống luôn dòng feedback ở dưới
         document.getElementById("feedback").innerHTML = "";
+
         //cho phép người dùng nhập lại
         userInput.disabled = false;
+
         //đưa con trỏ chuột vào ô nhập liệu để viết 
         userInput.focus();
       }
+      
+      //Chuyển lên câu sau (nhưng lần này trong mỗi text riêng đã tạo)
+      function next() {
+        const currentText = getCurrentText();
+        
+        if (!currentText) return;
+
+        if (currentText.currentIndex < sentences.length - 1) {
+          currentText.currentIndex++;
+
+          localStorage.setItem("texts", JSON.stringify(texts));
+        }
+        setupQuiz();
+      }
+
+      //Chuyển về câu trước (nhưng lần này trong mỗi text riêng đã tạo)
+      function back() {
+        const currentText = getCurrentText();
+        
+        if (!currentText) return;
+
+        if (currentText.currentIndex > 0) {
+          currentText.currentIndex--;
+
+          localStorage.setItem("texts", JSON.stringify(texts));
+        }
+        setupQuiz();
+      }
+
+
+
+
+
+      // ================================
+      // 6. TRANSCRIPT
+      // ================================
 
       //Hiện UI transcript lên
       function transcript() {
+        const currentText = getCurrentText();
+
+        if (!currentText) return;
+
+        const text = currentText.content.trim();
+        if (!text)
+          return alert("Paste the text please!"); //báo lỗi nếu người dùng đéo setup câu
+
         document.getElementById("setup-view").style.display = "none";
         document.getElementById("play-view").style.display = "none";
         document.getElementById("transcript-view").style.display = "block";
-
-        let text = document.getElementById("source-text").value;
+        document.getElementById("create-text-view").style.display = "none";
 
         //Cắt câu dựa vào dấu chấm, chấm than, chấm hỏi
         sentences = text.split(/[.?!]+/).map(s => s.trim()).filter(s => s.length > 0);
@@ -585,7 +1050,7 @@
 
                 <br> <br>
 
-                <button onclick="speakCurrentSentence(${i})">
+                <button onclick="speakTranscriptSentence(${i})">
                     🔊
                 </button>
 
@@ -600,8 +1065,16 @@
 
                 <textarea id="speech-input-${i}" read placeholder="Try to speaking..."></textarea>
 
+                <button onclick="speakPronunciation(${i})">
+                  Speak  
+                </button>
+
                 <button onclick="checkPronunciation(${i})">
                   Check
+                </button>
+
+                <button onclick="replayPronunciation(${i})">
+                  Replay  
                 </button>
 
                 <div id="pronunciation-feedback-${i}"></div>
@@ -615,25 +1088,91 @@
         setActiveTab(document.getElementById("transcript-tab"));
       }
 
-      //hàm bắt đầu nói (bấm nút => hiện box ra ở dưới, còn muốn thu lại thì cx bấm cái nút đó)
+      //Hàm đọc câu hiện tại (trong transcript)
+      function speakTranscriptSentence(index) {
+        //lấy đúng hiện tại
+        const text = sentences[index]; 
+        
+        if (!text) return;
+
+        //chọn ngôn ngữ
+        const language = document.getElementById("language-select").value;
+
+        //chọn tốc độ
+        const speed = document.getElementById("speed-select").value;
+
+        //tạo câu đọc bằng giọng máy
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        //cài ngôn ngữ và tốc độ đọc
+        utterance.lang = language; 
+        utterance.rate = speed; 
+
+        //dừng câu đang đọc trước đó rồi đọc câu hiện tại
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      }
+
+
+
+
+
+      // ================================
+      // 7. PRONUNCIATION
+      // ================================
+
+      //hàm hiện box ra ở dưới, còn muốn thu lại thì cx bấm cái nút đó
       function startSpeaking(index) {
         const box = document.getElementById(`pronunciation-${index}`);
-        const recognition = new SpeechRecognition();
         
         if (box.style.display === "none") {
           box.style.display = "block";
 
           recognition.lang = languageSelect.value;
           recognition.start();
-
-          recognition.onresult = function(event) {
-            const result = event.results[0][0].transcript;
-
-            document.getElementById(`speech-input-${index}`).value = result;
-          };
         } else {
           box.style.display = "none";
         }
+      }
+
+      //hàm bắt đầu nói
+      function speakPronunciation(index) {
+        const input = document.getElementById(`speech-input-${index}`);
+
+        const speechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!speechRecognition) {
+          alert("Speech Recognition is not supported in thís browser!");
+          return;
+        }
+
+        const recognition = new speechRecognition();
+
+        recognition.lang = languageSelect.value;
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onresult = function(event) {
+          const result = event.result[0][0].transcript.trim();
+
+          if (!result) return;
+
+          //Nếu textarea đang có nội dung
+          //thì thêm kết quả mới vào cuối
+          if (input.value.trim() !== "") {
+            input.value += " " + result;
+          } else {
+            input.value = result;
+          }
+
+          input.dispatchEvent(new Event("input"));
+        };
+
+        recognition.onerror = function(event) {
+          console.log("Speech recognition error: ", event.error);
+        };
+
+        recognition.start();
       }
 
       //hàm so sánh từ mà user nói vs từ gốc (tái sử dụng từ hàm check từ sai ở trên)
@@ -723,9 +1262,16 @@
         // Cho phép nói lại
         input.disabled = false;
 
-        // Bắt đầu nói lại
-        startSpeaking(index);
+        input.focus();
       }
+
+
+
+
+
+      // ================================
+      // 8. NAVIGATION
+      // ================================
 
       //hàm thay đổi nút tab khi đc chọn
       function setActiveTab(activeTab) {
@@ -735,48 +1281,170 @@
         activeTab.classList.add("active");
       }
 
-      //Lưu lại văn bản dán, văn bản người dùng nhập, ngôn ngữ, tốc độ...
-      const sourceText = document.getElementById("source-text");
-      const userInput = document.getElementById("user-input");
-      const languageSelect = document.getElementById("language-select");
-      const speedSelect = document.getElementById("speed-select");
+      //tab create text
+      function createText() {
+        document.getElementById("create-text-view").style.display = "block";
+        document.getElementById("setup-view").style.display = "none";
+        document.getElementById("play-view").style.display = "none";
+        document.getElementById("transcript-view").style.display = "none";
 
-      //Khôi phục dữ liệu khi mở lại trang
-      sourceText.value = localStorage.getItem("sourceText") || "";
-      languageSelect.value = localStorage.getItem("languageSelect") || languageSelect.value;
-      speedSelect.value = localStorage.getItem("speedSelect") || speedSelect.value;
+        renderTextList();
+
+        setActiveTab(document.getElementById("create-text-tab"));
+      }
+
+
+
+
+
+      // ================================
+      // 9. CREATE TEXT / POPUP
+      // ================================
+
+      //hàm mở popup khi bấm vào nút dấu +
+      function openCreateTextPopup() {
+        document.getElementById("create-text-popup").style.display = "flex";
+      }
+
+      //hàm đóng popup khi bấm cancel
+      function closeCreateTextPopup() {
+        document.getElementById("create-text-popup").style.display = "none";
+      }
+
+      //hàm tạo text real
+      function createNewText() {
+        const name = document.getElementById("new-text-name").value.trim();
+
+        if (!name)
+          return alert("Please enter a text name!");
+
+        const newText = {
+          id: Date.now(),
+          name: name,
+          content: "",
+          createdAt: Date.now(),
+          currentIndex: 0
+        };
+
+        texts.push(newText);
+
+        //Lưu toàn bộ texts vào localStorage
+        localStorage.setItem("texts", JSON.stringify(texts));
+
+        //chọn text vừa tạo
+        currentTextId = newText.id;
+        localStorage.setItem("currentTextId", currentTextId);
+
+        renderTextList();
+
+        //đóng popup
+        closeCreateTextPopup();
+
+        //chuyển qua setup-view
+        backToSetUpView();
+
+        console.log(newText);
+      }
+
       
 
-      //Tự động lưu
-      sourceText.addEventListener("input", () => {
-        sourceText.style.height = "auto";
-        sourceText.style.height = sourceText.scrollHeight + "px";
 
-        localStorage.setItem("sourceText", sourceText.value);
-      });
 
-      userInput.addEventListener("input", () => {
-        userInput.style.height = "auto";
-        userInput.style.height = userInput.scrollHeight + "px";
+      // ================================
+      // 10. TEXT LIST
+      // ================================
 
-        localStorage.setItem(
-            `userInput-${currentIndex}`,
-            userInput.value
+      //hàm danh sách cách text đã tạo
+      function renderTextList() {
+        let filteredTexts = texts;
+        const textList = document.getElementById("text-list");
+        const sortValue = document.getElementById("select-sort").value;
+        const searchInput = document.getElementById("search-input");
+        const keyword = searchInput.value.toLowerCase();
+
+        filteredTexts = texts.filter(text =>
+          text.name.toLowerCase().includes(keyword)
         );
-      });
+        
+        //xóa danh sách cũ trước khi render lại
+        textList.innerHTML = "";
 
-      languageSelect.addEventListener("change", () => {
-          localStorage.setItem("languageSelect", languageSelect.value);
-      });
+        //nếu chưa có text nào
+        if (texts.length === 0) {
+          textList.innerHTML = `<p>No Text Yet</p>`;
+          return;
+        }
 
-      speedSelect.addEventListener("change", () => {
-          localStorage.setItem("speedSelect", speedSelect.value);
-      });
+        if (sortValue === "a-z") {
+          filteredTexts.sort((a, b) =>
+              a.name.localeCompare(b.name)
+          );
+        }
 
-      //hiện số câu lúc trước đã dừng trên đầu màn hình setup-view 
-      // để người xem biết luôn lúc trước mình đang ở câu mấy trước khi bắt đầu bấm nút start 
-      const savedProgress = document.getElementById("saved-progress");
-      savedProgress.innerText = `Current sentence: ${currentIndex + 1}`;
+        if (sortValue === "z-a") {
+          filteredTexts.sort((a, b) =>
+              b.name.localeCompare(a.name)
+          );
+        }
+
+        if (sortValue === "latest") {
+          filteredTexts.sort((a, b) =>
+              b.createdAt - a.createdAt
+          );
+        }
+
+        if (sortValue === "oldest") {
+          filteredTexts.sort((a, b) =>
+              a.createdAt - b.createdAt
+          );
+        }
+
+        //duyệt qua toàn bộ text object
+        filteredTexts.forEach(text => {
+          textList.innerHTML += `
+            <section class="text-item" onclick="openText(${text.id})">
+
+              <div class="text-info"> 
+                <h3>${text.name}</h3>
+                <p>Created: ${new Date(text.createdAt).toLocaleString()}</p>  
+              </div>
+
+              <button class="delete-text" onclick="event.stopPropagation(); deleteText(${text.id})">
+                🗑️
+              </button>
+
+            </section>
+          `
+        });
+      }
+
+      //hàm nhảy qua setup-view nếu bấm vào section
+      function openText(id) {
+        //chọn text
+        currentTextId = id;
+        localStorage.setItem("currentTextId", currentTextId);
+
+        //chuyển qua Setup View
+        backToSetUpView();
+      }
+
+      //hàm xóa object (xóa text đã tạo)
+      function deleteText(id) {
+        //xóa object khỏi mảng
+        texts = texts.filter(text => text.id !== id);
+
+        //cập nhật localStorage
+        localStorage.setItem("texts", JSON.stringify(texts));
+
+        //xóa id object khi bấm vào thùng rác
+        if (currentTextId == id) {
+          currentTextId = null;
+          localStorage.removeItem("currentTextId");
+        }
+
+        //reder lại danh sách
+        renderTextList();
+      }
 
     </script>
   </body>
