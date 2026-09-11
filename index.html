@@ -419,9 +419,8 @@
       /* Một text object trong danh sách */
       .text-item {
         display: flex;
-        align-items: baseline;
-        justify-content: left;
-        gap: 275px;
+        align-items: center;
+        justify-content: space-between;
 
         padding: 12px, 15px;
         margin-top: 10px;
@@ -1127,9 +1126,6 @@
         
         if (box.style.display === "none") {
           box.style.display = "block";
-
-          recognition.lang = languageSelect.value;
-          recognition.start();
         } else {
           box.style.display = "none";
         }
@@ -1153,17 +1149,23 @@
         recognition.interimResults = false;
 
         recognition.onresult = function(event) {
-          const result = event.result[0][0].transcript.trim();
+          const result = event.results[0][0].transcript.trim();
 
           if (!result) return;
 
-          //Nếu textarea đang có nội dung
-          //thì thêm kết quả mới vào cuối
-          if (input.value.trim() !== "") {
-            input.value += " " + result;
-          } else {
-            input.value = result;
-          }
+          //Lấy vị trí con trỏ hiện tại
+          const cursorPosition = input.selectionStart;
+
+          //Tách phần trước và sau con trỏ
+          const beforeCursor = input.value.slice(0, cursorPosition);
+          const afterCursor = input.value.slice(cursorPosition);
+
+          //Chèn kết quả nói vào đúng vị trí con trỏ
+          input.value = beforeCursor + result + afterCursor;
+
+          //Đưa con trỏ ra sau phần vừa chèn
+          input.selectionStart = cursorPosition + result.length;
+          input.selectionEnd = cursorPosition + result.length;
 
           input.dispatchEvent(new Event("input"));
         };
@@ -1172,6 +1174,7 @@
           console.log("Speech recognition error: ", event.error);
         };
 
+        console.log("Starting recognition...");
         recognition.start();
       }
 
@@ -1184,7 +1187,9 @@
         //Hàm so sánh siêu ez
         if (userSpeak === original) {
           feedbackDiv.innerHTML = `<p class="success">${original}</p>`;
-          //đéo cho người dùng nói tiếp nx khi đã bấm enter
+
+          // Nếu nói đúng toàn bộ câu thì khóa input,
+          // tránh người dùng thay đổi kết quả sau khi Check.
           document.getElementById(`speech-input-${index}`).disabled = true;       
         } else {
           //tách câu gốc và câu người dùng nhập thành từng từ
