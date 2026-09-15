@@ -129,12 +129,15 @@
       }
 
       /* ================================
-        SETUP VIEW
+        SETUP VIEW & PLAY-VIEW
         ================================= */
 
       /* Textarea tự động cao theo nội dung, không cho người dùng kéo resize */  
-      #source-text {
-        overflow-y: hidden; /*giấu thanh cuộn dọc*/
+      textarea {
+        min-height: 60px;
+        max-height: 300px;
+
+        overflow-y: auto; /*giấu thanh cuộn dọc*/
         resize: none; /*Không cho người dùng kéo thủ công*/
       }
 
@@ -266,11 +269,6 @@
 
       .transcript-sentence button:hover {
         background: #0056b3;
-      }
-
-      .sentence {
-        justify-content: space-between;
-        align-items: flex-start;
       }
 
       /* ================================
@@ -516,7 +514,7 @@
       <label><b>Paste the text into the box below: </b></label>
       <br>
       <!--Ô nhập liệu-->
-      <textarea id="source-text" placeholder="Example: Hello. I want to train dictation..."></textarea>
+      <textarea id="source-text" placeholder="Paste your text here..."></textarea>
       <br>
       <!--Cánh cửa dẫn vào chiến trường đẫm máu-->
       <button type="button" onclick="startApp()">Start listening</button>
@@ -529,38 +527,38 @@
         Sentence: <span id="current-lines"> 1 </span> / <span id="total-lines"> 0 </span>
       </h3>
       <!--Nghe lại-->
-      <button onclick="speakCurrentSentence()">Listen again</button>
+      <button onclick="speakCurrentSentence(); userInput.focus();">Listen again</button>
       <br> <br>
       <!--Chọn ngôn ngữ-->
       <label>Language:</label>
-      <select id="language-select">
-        <option value="en-US">English-US</option>
-        <option value="en-GB">English-UK</option>
-        <option value="vi-VN">Vietnamese</option>
-        <option value="es-ES">Spanish</option>
-        <option value="fr-FR">French</option>
-        <option value="hi-IN">Hindi</option>
-        <option value="id-ID">Indonesian</option>
-        <option value="it-IT">Italian</option>
-        <option value="ja-JP">Japanese</option>
-        <option value="ko-KR">Korean</option>
-        <option value="nl-NL">Dutch</option>
-        <option value="pl-PL">Polish</option>
-        <option value="pt-BR">Brazil</option>
-        <option value="ru-RU">Russia</option>
-        <option value="zh-CN">Chinese</option>
+      <select id="language-select" onclick="userInput.focus();">
+        <option value="en-US" onclick="userInput.focus();">English-US</option>
+        <option value="en-GB" onclick="userInput.focus();">English-UK</option>
+        <option value="vi-VN" onclick="userInput.focus();">Vietnamese</option>
+        <option value="es-ES" onclick="userInput.focus();">Spanish</option>
+        <option value="fr-FR" onclick="userInput.focus();">French</option>
+        <option value="hi-IN" onclick="userInput.focus();">Hindi</option>
+        <option value="id-ID" onclick="userInput.focus();">Indonesian</option>
+        <option value="it-IT" onclick="userInput.focus();">Italian</option>
+        <option value="ja-JP" onclick="userInput.focus();">Japanese</option>
+        <option value="ko-KR" onclick="userInput.focus();">Korean</option>
+        <option value="nl-NL" onclick="userInput.focus();">Dutch</option>
+        <option value="pl-PL" onclick="userInput.focus();">Polish</option>
+        <option value="pt-BR" onclick="userInput.focus();">Brazil</option>
+        <option value="ru-RU" onclick="userInput.focus();">Russia</option>
+        <option value="zh-CN" onclick="userInput.focus();">Chinese</option>
       </select>
       <!--Chọn tốc độ-->
       <label>Speed:</label>
-      <select id="speed-select">
-        <option value="0.25">0.25x</option>
-        <option value="0.5">0.5x</option>
-        <option value="0.75">0.75x</option>
-        <option value="1" selected>1x</option> <!--Tốc độ mặc định-->
-        <option value="1.25">1.25x</option>
-        <option value="1.5">1.5x</option>
-        <option value="1.75">1.75x</option>
-        <option value="2">2x</option>
+      <select id="speed-select" onclick="userInput.focus();">
+        <option value="0.25" onclick="userInput.focus();">0.25x</option>
+        <option value="0.5" onclick="userInput.focus();">0.5x</option>
+        <option value="0.75" onclick="userInput.focus();">0.75x</option>
+        <option value="1" selected onclick="userInput.focus();">1x</option> <!--Tốc độ mặc định-->
+        <option value="1.25" onclick="userInput.focus();">1.25x</option>
+        <option value="1.5" onclick="userInput.focus();">1.5x</option>
+        <option value="1.75" onclick="userInput.focus();">1.75x</option>
+        <option value="2" onclick="userInput.focus();">2x</option>
       </select>
       <br>
       <p><b>Listen and rewrite:</b></p>
@@ -572,6 +570,7 @@
       <div class="button-row">
         <div class="button-row1">
           <button id="replay" onclick="replaySentence()">Replay</button>
+          <button id="check" onclick="checkAnswer()">Check</button>
         </div>
         <div class="button-row2">
             <button id="back-button" onclick="back()" style="display: none;">
@@ -595,19 +594,19 @@
     <script>
 
       // ================================
-      // 1. DATA / STATE
+      // DATA / STATE
       // ================================
 
-      //mảng chứa toàn bộ các câu trong bài
+      // Mảng chứa toàn bộ các câu trong bài
       let sentences = [];
 
-      //mảng chứa toàn bộ những texts đã tạo trong bài
+      // Mảng chứa toàn bộ những texts đã tạo trong bài
       let texts = JSON.parse(localStorage.getItem("texts")) || [];
 
-      //ID text hiện tại
+      // ID text hiện tại
       let currentTextId = Number(localStorage.getItem("currentTextId")) || null;
 
-      //hàm lấy số thứ tự câu đang làm dở lần trước (trong mỗi text riêng), nếu chưa có thì mặc định bắt đầu từ câu đầu tiên
+      // Hàm lấy số thứ tự câu đang làm dở lần trước (trong mỗi text riêng), nếu chưa có thì mặc định bắt đầu từ câu đầu tiên
       function getCurrentText() {
         return texts.find(text => text.id === currentTextId);
       }
@@ -616,37 +615,102 @@
 
 
 
+      // ========================================
+      // CURSOR MANAGEMENT - PLAY VIEW
+      // ========================================
+
+      // Vị trí con trỏ hiện tại trong ô nhập liệu của Play View
+      // Dùng để khôi phục lại vị trí con trỏ sau khi người dùng
+      // click ra ngoài, đổi ngôn ngữ hoặc đổi tốc độ.
+      let cursorStart = 0;
+      let cursorEnd = 0;
+
+      // Lưu vị trí con trỏ riêng cho từng câu trong Transcript.
+      // Ví dụ: speechCursors[0] là vị trí con trỏ của câu 1.
+      let speechCursors = {};
+
+
+
+
+
+      // ========================================
+      // TEXTAREA
+      // ========================================
+
+      // Tự động giãn chiều cao textarea theo nội dung bên trong.
+      // Được gọi khi nhập text và khi load lại trang.
+      function autoResizeTextarea(textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = textarea.scrollHeight + "px";
+      }
+
+      // Tự động thay đổi chiều cao textarea theo nội dung
+      document.querySelectorAll("textarea").forEach(textarea => {
+        textarea.addEventListener("input", () => {
+          autoResizeTextarea(textarea);
+        });
+      });
+
 
       // ================================
-      // 2. DOM ELEMENTS
+      // DOM ELEMENTS
       // ================================
 
-      //Lưu lại văn bản dán, văn bản người dùng nhập, ngôn ngữ, tốc độ, tên text...
+      // Lưu lại văn bản dán, văn bản người dùng nhập, ngôn ngữ, tốc độ, tên text...
       const sourceText = document.getElementById("source-text");
+
       const userInput = document.getElementById("user-input");
+      // Click vào vùng trống hoặc các khu vực không phải nút/select
+      // của Play View → đưa con trỏ trở lại ô nhập liệu.
+      // Mục đích: người dùng không bị mất vị trí con trỏ khi thao tác UI.
+      document.getElementById("play-view").addEventListener("click", (event) => {
+
+        const excluded = [
+          "back-button",
+          "next-button",
+          "replay",
+          "check"
+        ];
+
+        if (
+          event.target.tagName !== "BUTTON" &&
+          event.target.tagName !== "SELECT" &&
+          event.target.tagName !== "OPTION"
+        ) {
+          userInput.focus();
+        }
+
+      });
+
       const languageSelect = document.getElementById("language-select");
       const speedSelect = document.getElementById("speed-select");
       const textName = document.getElementById("text-name");
 
-      //Tự động lưu (cx ở mỗi text riêng)
+
+
+
+
+      // ========================================
+      // AUTO SAVE
+      // ========================================
+
+      // Tự động lưu nội dung source text vào đúng text object hiện tại.
       sourceText.addEventListener("input", () => {
         const currentText = getCurrentText();
 
-        if (!currentText) 
-          return;
+        if (!currentText) return;
 
         currentText.content = sourceText.value;
 
         localStorage.setItem("texts", JSON.stringify(texts));
       });
 
+      // Tự động lưu câu người dùng đang nhập.
+      // Mỗi text + mỗi câu có một key localStorage riêng.
       userInput.addEventListener("input", () => {
         const currentText = getCurrentText();
 
         if(!currentText) return;
-
-        userInput.style.height = "auto";
-        userInput.style.height = userInput.scrollHeight + "px";
 
         localStorage.setItem(
             `userInput-${currentTextId}-${currentText.currentIndex}`,
@@ -654,12 +718,31 @@
         );
       });
 
+      // Khi rời khỏi input, lưu lại vị trí con trỏ.
+      // Vị trí này sẽ được dùng để khôi phục con trỏ sau đó.
+      userInput.addEventListener("blur", () => {
+        cursorStart = userInput.selectionStart;
+        cursorEnd = userInput.selectionEnd;
+      });
+
+      // Khôi phục focus và vị trí con trỏ của Play View.
+      function restoreInputFocus() {
+        userInput.focus();
+        userInput.setSelectionRange(cursorStart, cursorEnd);
+      }
+
+      // Khi đổi ngôn ngữ, lưu lại lựa chọn.
+      // Sau đó đưa focus trở lại input để người dùng tiếp tục nhập.
       languageSelect.addEventListener("change", () => {
           localStorage.setItem("languageSelect", languageSelect.value);
+          userInput.focus();
       });
 
+      // Khi đổi tốc độ, lưu lại lựa chọn.
+      // Sau đó đưa focus trở lại input.
       speedSelect.addEventListener("change", () => {
           localStorage.setItem("speedSelect", speedSelect.value);
+          userInput.focus();
       });
 
 
@@ -667,30 +750,74 @@
 
 
       // ================================
-      // 3. INITIALIZATION
+      // INITIALIZATION
       // ================================
 
-      //Khôi phục dữ liệu khi mở lại trang (ở mỗi text riêng)
+      // Khôi phục dữ liệu khi mở lại trang
       sourceText.value = localStorage.getItem("sourceText") || "";
+      autoResizeTextarea(sourceText); // Tự động mở rộng textarea ngay khi trang được load.
+
       languageSelect.value = localStorage.getItem("languageSelect") || languageSelect.value;
       speedSelect.value = localStorage.getItem("speedSelect") || speedSelect.value;
 
 
-      //hiển thị danh sách các object đã tạo khi vừa mới vô trang
+      // Hiển thị danh sách các text object đã tạo.
       renderTextList();
 
-      //đổi màu tab để biết mình đang ở tab nào khi vừa vào trang
+      // Mặc định mở tab Create Text khi khởi động ứng dụng.
       setActiveTab(document.getElementById("create-text-tab")); 
 
 
 
 
 
+      // ========================================
+      // CURSOR MANAGEMENT - TRANSCRIPT
+      // ========================================
+
+      // Lưu vị trí con trỏ của từng ô speech input trong Transcript.
+      // Vì Transcript có nhiều câu nên mỗi câu cần lưu vị trí riêng.
+      function saveSpeechCursor(event) { 
+        // Bỏ qua những element không phải speech input.
+        if (!event.target.id.startsWith("speech-input-")) return; 
+        
+        // Lấy index của câu từ ID: speech-input-0, speech-input-1,...
+        const index = event.target.id.split("-").pop(); 
+        
+        speechCursors[index] = { 
+          start: event.target.selectionStart, 
+          end: event.target.selectionEnd 
+        }; 
+      } 
+      
+      // Theo dõi vị trí con trỏ khi người dùng di chuyển bằng bàn phím.
+      document.getElementById("transcript-view").addEventListener("keyup", saveSpeechCursor); 
+      
+      // Theo dõi vị trí con trỏ khi người dùng click chuột vào textarea.
+      document.getElementById("transcript-view").addEventListener("mouseup", saveSpeechCursor);
+
+      // Khôi phục focus và vị trí con trỏ của speech input.
+      // Cần index vì mỗi câu trong Transcript có một input riêng.
+      function restoreSpeechInputFocus(index) {
+        const input = document.getElementById(`speech-input-${index}`);
+
+        if (!input) return;
+
+        input.focus();
+
+        const cursor = speechCursors[index];
+
+        if (cursor) {
+          input.setSelectionRange(cursor.start, cursor.end);
+        }
+      }
+
+
       // ================================
-      // 4. SETUP VIEW
+      // SETUP VIEW
       // ================================
 
-      //hàm cập nhật tên text (tên object hiện tại) khi chọn object nào đó
+      // Hàm cập nhật tên text (tên object hiện tại) khi chọn object nào đó
       function updateSetupTextName() {
         const currentText = texts.find(text => text.id === currentTextId);
 
@@ -702,28 +829,30 @@
         textName.innerText = `Text name: ${currentText.name}`;
       }
 
-      //hàm lưu lại văn bản trong ô dán văn bản ở setup-view cho mỗi text đc tạo ra
+      // Hàm lưu lại văn bản trong ô dán văn bản ở setup-view cho mỗi text đc tạo ra
       function loadCurrentText() {
         const currentText = texts.find(text => text.id === currentTextId);
 
         if (!currentText) {
           sourceText.value = "";
+          autoResizeTextarea(sourceText);
           return;
         }
 
         sourceText.value = currentText.content || "";
+        autoResizeTextarea(sourceText);
       }
 
-      //Trở về màn hình setup-view
+      // Trở về màn hình setup-view
       function backToSetUpView() {
 
-        //kiểm tra xem đã có text object nào chưa
+        // Kiểm tra xem đã có text object nào chưa
         if (texts.length === 0) {
           alert("Please create a text object first!");
           return;
         }
 
-        //hiện số câu lúc trước đã dừng trên đầu màn hình setup-view 
+        // Hiện số câu lúc trước đã dừng trên đầu màn hình setup-view,
         // để người xem biết luôn lúc trước mình đang ở câu mấy trước khi bắt đầu bấm nút start 
         const savedProgress = document.getElementById("saved-progress");
         const currentText = getCurrentText();
@@ -731,10 +860,10 @@
           savedProgress.innerText = `Current sentence: ${currentText.currentIndex + 1}`;
         }
 
-        //cập nhật tên text hiện tại
+        // Cập nhật tên text hiện tại
         updateSetupTextName();
 
-        //dùng đoạn dán riêng cho mỗi text đc tạo
+        // Mở đúng văn bản đã dán trong mỗi object
         loadCurrentText();
 
         document.getElementById("setup-view").style.display = "block";
@@ -742,7 +871,10 @@
         document.getElementById("transcript-view").style.display = "none";
         document.getElementById("create-text-view").style.display = "none";
 
-        //thay đổi nút tab khi đc chọn
+        // Resize sau khi setup-view đã visible
+        autoResizeTextarea(sourceText);
+
+        // Thay đổi nút tab khi đc chọn
         setActiveTab(document.getElementById("setup-tab"));
       }
 
@@ -751,92 +883,95 @@
 
 
       // ================================
-      // 5. PLAY VIEW
+      // PLAY VIEW
       // ================================
 
-      //Hàm bắt đầu
+      // Hàm bắt đầu
       function startApp() {
         const currentText = getCurrentText();
 
         if (!currentText) return;
 
-        //Cắt đoạn văn đã dán thành từng câu riêng lẻ
+        // Cắt đoạn văn đã dán thành từng câu riêng lẻ
         let text = currentText.content.trim();
         if (!text)
-          return alert("Paste the text please!"); //báo lỗi nếu người dùng đéo setup câu
+          return alert("Paste the text please!"); // Báo lỗi nếu người dùng không setup câu
 
 
-        //Cắt câu dựa vào dấu chấm, chấm than, chấm hỏi
+        // Cắt câu dựa vào dấu chấm, chấm than, chấm hỏi
         sentences = text.split(/[.?!]+/).map(s => s.trim()).filter(s => s.length > 0);
 
-        //lưu lại câu hiện tại để khi reload hay tắt mở lại vẫn quay lại đúng chỗ đang làm (ở mỗi text riêng)
+        // Lưu lại câu hiện tại để khi reload hay tắt mở lại vẫn quay lại đúng chỗ đang làm (ở mỗi text riêng)
         currentText.currentIndex = Math.min(
           currentText.currentIndex,
           Math.max(sentences.length - 1, 0)
         );
 
-        //lưu lại danh sách các câu để có thể khôi phục bài đang làm sau khi reload
+        // Lưu lại danh sách các câu để có thể khôi phục bài đang làm sau khi reload
         localStorage.setItem(
           "sentences",
           JSON.stringify(sentences)
         );
         
-        document.getElementById("total-lines").innerText = sentences.length; //tổng số câu
-        document.getElementById("setup-view").style.display = "none"; //chuyển qua khung luyện nhưng ẩn màn hình setup-view
+        document.getElementById("total-lines").innerText = sentences.length; // Tổng số câu
+        document.getElementById("setup-view").style.display = "none"; // Chuyển qua khung luyện nhưng ẩn màn hình setup-view
         document.getElementById("transcript-view").style.display = "none";
-        document.getElementById("play-view").style.display = "block"; //chuyển qua khung luyện chỉ hiện màn hình play-view
+        document.getElementById("play-view").style.display = "block"; // Chuyển qua khung luyện chỉ hiện màn hình play-view
         document.getElementById("create-text-view").style.display = "none";
         
-        //thay đổi nút tab khi đc chọn
+        // Thay đổi nút tab khi đc chọn
         setActiveTab(document.getElementById("play-tab"));
           
         setupQuiz();
       }
 
-      //Hàm setup câu hỏi hiện tại
+      // Hàm setup câu hỏi hiện tại
       function setupQuiz(restoreInput = true) {
         const currentText = getCurrentText();
 
         if (!currentText) return;
 
-        //hiện số câu hiện tại và tổng số câu
+        // Hiện số câu hiện tại và tổng số câu
         document.getElementById("current-lines").innerText = currentText.currentIndex + 1;
         document.getElementById("total-lines").innerText = sentences.length;
 
-        //lấy lại nội dung người dùng đã nhập ở câu hiện tại
+        // Lấy lại nội dung người dùng đã nhập ở câu hiện tại
         const savedInput = localStorage.getItem(
           `userInput-${currentTextId}-${currentText.currentIndex}`
         );
         document.getElementById("user-input").value = savedInput || "";
 
-        //nếu cần khôi phục thì hiện lại nội dung cũ, nếu không thì để ô nhập trống
+        // Nếu cần khôi phục thì hiện lại nội dung cũ, nếu không thì để ô nhập trống
         if (restoreInput) {
           document.getElementById("user-input").value = savedInput || "";
         } else {
           document.getElementById("user-input").value = "";
         }
 
-        //Cho phép người dùng nhập văn bản
+        // Tự động giãn cách ô nhập liệu lại như cũ
+        autoResizeTextarea(userInput);
+
+        // Cho phép người dùng nhập văn bản
         document.getElementById("user-input").disabled = false;
-        //Làm trống phần check câu khi mà người dùng chưa bấm Enter sau khi ghi xong
+        // Làm trống phần check câu khi mà người dùng chưa bấm Enter sau khi ghi xong
         document.getElementById("feedback").innerHTML = "";
 
-        //hiện nút đi tiếp hoặc cả 2 nút nếu số câu hiện tại nhỏ hơn số câu đã thêm từ việc dán
-        if (currentText.currentIndex == 0 && sentences.length - 1  == 0) { //nếu chỉ có 1 câu thì khỏi hiện nút back vs next luôn
+        // Hiện nút đi tiếp hoặc cả 2 nút nếu số câu hiện tại nhỏ hơn số câu đã thêm từ việc dán
+        if (currentText.currentIndex == 0 && sentences.length - 1  == 0) { // Nếu chỉ có 1 câu thì khỏi hiện nút back vs next luôn
           document.getElementById("next-button").style.display = "none";
           document.getElementById("back-button").style.display = "none";
         } else {
           if (currentText.currentIndex < sentences.length - 1) {
-            //nếu là câu đầu thì chỉ in nút đi tiếp
+            // Nếu là câu đầu thì chỉ in nút đi tiếp
             if (currentText.currentIndex == 0) {
               document.getElementById("next-button").style.display = "block";
               document.getElementById("back-button").style.display = "none";
-            //nếu > câu đầu và < số câu đã định thì hiện cả 2 nút
+            // Nếu > câu đầu và < số câu đã định thì hiện cả 2 nút
             } else {
               document.getElementById("next-button").style.display = "block";
               document.getElementById("back-button").style.display = "block";
             }
-          //nếu end hết bài nghe thì ko hiện nút gì nx
+          // Nếu end hết bài nghe thì ko hiện nút gì nx
           } else {
             document.getElementById("next-button").style.display = "none";
             document.getElementById("back-button").style.display = "block";
@@ -847,40 +982,34 @@
         speakCurrentSentence();
       }
 
-      //Hàm đọc câu hiện tại (trong play-view)
+      // Hàm đọc câu hiện tại (trong play-view)
       function speakCurrentSentence() {
         const currentText = getCurrentText();
 
         if (!currentText) return;
 
-        //lấy đúng hiện tại
+        // Lấy đúng câu hiện tại
         let text = sentences[currentText.currentIndex];   
 
-        //chọn ngôn ngữ
+        // Chọn ngôn ngữ
         let language = document.getElementById("language-select").value;
 
-        //chọn tốc độ
+        // Chọn tốc độ
         let speed = document.getElementById("speed-select").value;
 
-        //tạo câu đọc bằng giọng máy
+        // Tạo câu đọc bằng giọng máy
         let utterance = new SpeechSynthesisUtterance(text);
 
-        //cài ngôn ngữ và tốc độ đọc
+        // Cài ngôn ngữ và tốc độ đọc
         utterance.lang = language; 
         utterance.rate = speed; 
 
-        //dừng câu đang đọc trước đó rồi đọc câu hiện tại
+        // Dừng câu đang đọc trước đó rồi đọc câu hiện tại
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
       }
 
-      //Lắng nghe sự kiện bấm Enter ở ô nhập liệu
-      document.getElementById("user-input").addEventListener("keypress", function(event) {
-        if (event.key === "Enter")
-          checkAnswer(); 
-      });
-
-      //Kiểm tra câu có ghi đúng không
+      // Kiểm tra câu có ghi đúng không
       function checkAnswer() {
         const currentText = getCurrentText();
 
@@ -890,40 +1019,40 @@
         let originalAns = sentences[currentText.currentIndex].trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
         let feedbackDiv = document.getElementById("feedback");
 
-        //Hàm so sánh siêu ez
+        // Hàm so sánh siêu đơn giản
         if (userAns === originalAns) {
           feedbackDiv.innerHTML = `<p class="success">${userAns}</p>`;
-          //đéo cho người dùng nhập tiếp nx khi đã bấm enter (trừ khi bấm nút replay)
+          // Không cho người dùng nhập tiếp nữa khi đã bấm nút check (trừ khi bấm nút replay)
           document.getElementById("user-input").disabled = true;       
         } else {
-          //tách câu gốc và câu người dùng nhập thành từng từ
+          // Tách câu gốc và câu người dùng nhập thành từng từ
           let originalWords = sentences[currentText.currentIndex].split(" ");
           let userWords = document.getElementById("user-input").value.split(" ");
 
-          //mảng chứa kết quả sau khi căn chỉnh các từ
+          // Mảng chứa kết quả sau khi căn chỉnh các từ
           let adjustedUserWords = [];
 
-          //vị trí từ đang kiểm tra của người dùng
+          // Vị trí từ đang kiểm tra của người dùng
           let userIndex = 0;
 
-          //lưu kết quả để in ra giao diện
+          // Lưu kết quả để in ra giao diện
           let htmlResult = "";
           
-          //check lần 1 (chỉ thêm vô thôi và còn check lại lần 2)
+          // Check lần 1 (chỉ thêm vô thôi và còn check lại lần 2)
           for (let i = 0; i < originalWords.length; i++) {
-            //làm sạch câu gốc
+            // Làm sạch câu gốc
             let originalWord = originalWords[i].toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
 
             let userWord = userWords[userIndex] || "";
             
-            //làm sạch câu của người dùng
+            // Làm sạch câu của người dùng
             let cleanUserWord = userWord.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
 
             if (originalWords[i+1] && 
                 originalWords[i+1].toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "") === cleanUserWord) {
-              //Phát hiện user bỏ hoặc ghi thiếu từ
+              // Phát hiện user bỏ hoặc ghi thiếu từ
               adjustedUserWords.push("");
-              //Ko tăng userIndex để từ tiếp theo đc kiểm tra lại
+              // Không tăng userIndex để từ tiếp theo đc kiểm tra lại
             } else if (originalWord === cleanUserWord) {
               // Đúng → giữ lại
               adjustedUserWords.push(userWord);
@@ -935,13 +1064,13 @@
             }
           };
 
-          //check lại lần 2 rồi in ra kết quả so sánh
+          // Check lại lần 2 rồi in ra kết quả so sánh
           adjustedUserWords.forEach((userWord, index) => { 
             let word = originalWords[index];
             let cleanWord = word.toLowerCase().replace(/[.,**\\/**#!$%**\\^**&**\\\***;:{}=\\-\_\`\~()]/g,""); 
             let cleanUserWord = userWord.toLowerCase().replace(/[.,**\\/**#!$%**\\^**&**\\\***;:{}=\\-\_\`\~()]/g,""); 
 
-            //check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu \* 
+            // Check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu * 
             if (cleanUserWord === "") { 
               htmlResult += `<span class="missing">${"*".repeat(cleanWord.length)}</span>`; 
             } else if (cleanWord === cleanUserWord) { 
@@ -951,36 +1080,36 @@
             } 
           });
 
-          //hiển thị kết quả so sánh
+          // Hiển thị kết quả so sánh
           feedbackDiv.innerHTML = `<p>${htmlResult}</p>`;
 
-          speakCurrentSentence(); //đọc lại câu để dò xem mình sai hoặc nghe thiếu ở đâu
+          speakCurrentSentence(); // Đọc lại câu để dò xem mình sai hoặc nghe thiếu ở đâu
         }
       } 
 
-      //Replay lại câu hiện tại đã viết
+      // Replay lại câu hiện tại đã viết
       function replaySentence() {
         const currentText = getCurrentText();
 
         if (!currentText) return;
 
-        //làm trống ô nhập liệu
+        // Làm trống ô nhập liệu
         userInput.value = "";
 
-        //bỏ lưu những chữ mà người dùng nhập câu hiện tại và cx để tránh sau này quay lại gặp lại ~ chữ 
+        // Bỏ lưu những chữ mà người dùng nhập câu hiện tại 
         localStorage.removeItem(`userInput-${currentTextId}-${currentText.currentIndex}`);
 
-        //làm trống luôn dòng feedback ở dưới
+        // Làm trống luôn dòng feedback ở dưới
         document.getElementById("feedback").innerHTML = "";
 
-        //cho phép người dùng nhập lại
+        // Cho phép người dùng nhập lại
         userInput.disabled = false;
 
-        //đưa con trỏ chuột vào ô nhập liệu để viết 
+        // Đưa con trỏ chuột vào ô nhập liệu để viết 
         userInput.focus();
       }
       
-      //Chuyển lên câu sau (nhưng lần này trong mỗi text riêng đã tạo)
+      // Chuyển lên câu sau (nhưng lần này trong mỗi text riêng đã tạo)
       function next() {
         const currentText = getCurrentText();
         
@@ -991,10 +1120,11 @@
 
           localStorage.setItem("texts", JSON.stringify(texts));
         }
+
         setupQuiz();
       }
 
-      //Chuyển về câu trước (nhưng lần này trong mỗi text riêng đã tạo)
+      // Chuyển về câu trước (nhưng lần này trong mỗi text riêng đã tạo)
       function back() {
         const currentText = getCurrentText();
         
@@ -1005,6 +1135,7 @@
 
           localStorage.setItem("texts", JSON.stringify(texts));
         }
+
         setupQuiz();
       }
 
@@ -1013,10 +1144,10 @@
 
 
       // ================================
-      // 6. TRANSCRIPT
+      // TRANSCRIPT
       // ================================
 
-      //Hiện UI transcript lên
+      // Hiện UI transcript lên
       function transcript() {
         const currentText = getCurrentText();
 
@@ -1024,17 +1155,41 @@
 
         const text = currentText.content.trim();
         if (!text)
-          return alert("Paste the text please!"); //báo lỗi nếu người dùng đéo setup câu
+          return alert("Paste the text please!"); // Báo lỗi nếu người dùng đéo setup câu
 
         document.getElementById("setup-view").style.display = "none";
         document.getElementById("play-view").style.display = "none";
         document.getElementById("transcript-view").style.display = "block";
         document.getElementById("create-text-view").style.display = "none";
 
-        //Cắt câu dựa vào dấu chấm, chấm than, chấm hỏi
+        document.getElementById("transcript-view").addEventListener("click", (event) => {
+          if (!event.target.id.startsWith("speech-input-")) return;
+
+          const index = event.target.id.split("-").pop();
+
+          saveSpeechCursor(index);
+        });
+
+        document.getElementById("transcript-view").addEventListener("keyup", (event) => {
+          if (!event.target.id.startsWith("speech-input-")) return;
+
+          const index = event.target.id.split("-").pop();
+
+          saveSpeechCursor(index);
+        });
+
+        document.getElementById("transcript-view").addEventListener("mouseup", (event) => {
+          if (!event.target.id.startsWith("speech-input-")) return;
+
+          const index = event.target.id.split("-").pop();
+
+          saveSpeechCursor(index);
+        });
+
+        // Cắt câu dựa vào dấu chấm, chấm than, chấm hỏi
         sentences = text.split(/[.?!]+/).map(s => s.trim()).filter(s => s.length > 0);
         
-        //lấy chỗ để in transcript
+        // Lấy chỗ để in transcript
         let transcriptContent = document.getElementById("transcript-content");
 
         transcriptContent.innerHTML = "";
@@ -1049,11 +1204,11 @@
 
                 <br> <br>
 
-                <button onclick="speakTranscriptSentence(${i})">
+                <button id="pronunciation-button" onclick="speakTranscriptSentence(${i}); restoreSpeechInputFocus(${i});">
                     🔊
                 </button>
 
-                <button onclick="startSpeaking(${i})">
+                <button id="shadowing-button" onclick="startSpeaking(${i}); restoreSpeechInputFocus(${i});">
                   🎙️
                 </button>
 
@@ -1064,7 +1219,7 @@
 
                 <textarea id="speech-input-${i}" read placeholder="Try to speaking..."></textarea>
 
-                <button onclick="speakPronunciation(${i})">
+                <button onclick="speakPronunciation(${i}); restoreSpeechInputFocus(${i});">
                   Speak  
                 </button>
 
@@ -1083,31 +1238,31 @@
           `;
         }
 
-        //thay đổi nút tab khi đc chọn
+        // Thay đổi nút tab khi đc chọn
         setActiveTab(document.getElementById("transcript-tab"));
       }
 
-      //Hàm đọc câu hiện tại (trong transcript)
+      // Hàm đọc câu hiện tại (trong transcript)
       function speakTranscriptSentence(index) {
-        //lấy đúng hiện tại
+        // Lấy đúng hiện tại
         const text = sentences[index]; 
         
         if (!text) return;
 
-        //chọn ngôn ngữ
+        // Chọn ngôn ngữ
         const language = document.getElementById("language-select").value;
 
-        //chọn tốc độ
+        // Chọn tốc độ
         const speed = document.getElementById("speed-select").value;
 
-        //tạo câu đọc bằng giọng máy
+        // Tạo câu đọc bằng giọng máy
         const utterance = new SpeechSynthesisUtterance(text);
 
-        //cài ngôn ngữ và tốc độ đọc
+        // Cài ngôn ngữ và tốc độ đọc
         utterance.lang = language; 
         utterance.rate = speed; 
 
-        //dừng câu đang đọc trước đó rồi đọc câu hiện tại
+        // Dừng câu đang đọc trước đó rồi đọc câu hiện tại
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
       }
@@ -1117,10 +1272,10 @@
 
 
       // ================================
-      // 7. PRONUNCIATION
+      // PRONUNCIATION
       // ================================
 
-      //hàm hiện box ra ở dưới, còn muốn thu lại thì cx bấm cái nút đó
+      // Hàm hiện box ra ở dưới, còn muốn thu lại thì cx bấm cái nút đó
       function startSpeaking(index) {
         const box = document.getElementById(`pronunciation-${index}`);
         
@@ -1131,7 +1286,7 @@
         }
       }
 
-      //hàm bắt đầu nói
+      // Hàm bắt đầu nói
       function speakPronunciation(index) {
         const input = document.getElementById(`speech-input-${index}`);
 
@@ -1141,6 +1296,10 @@
           alert("Speech Recognition is not supported in thís browser!");
           return;
         }
+
+        const cursor = speechCursors[index];
+
+        if (!cursor) return;
 
         const recognition = new speechRecognition();
 
@@ -1153,19 +1312,20 @@
 
           if (!result) return;
 
-          //Lấy vị trí con trỏ hiện tại
-          const cursorPosition = input.selectionStart;
+          const beforeCursor = input.value.slice(0, cursor.start);
+          const afterCursor = input.value.slice(cursor.end);
 
-          //Tách phần trước và sau con trỏ
-          const beforeCursor = input.value.slice(0, cursorPosition);
-          const afterCursor = input.value.slice(cursorPosition);
-
-          //Chèn kết quả nói vào đúng vị trí con trỏ
+          // Chèn kết quả nói vào vị trí con trỏ
           input.value = beforeCursor + result + afterCursor;
 
-          //Đưa con trỏ ra sau phần vừa chèn
-          input.selectionStart = cursorPosition + result.length;
-          input.selectionEnd = cursorPosition + result.length;
+          // Đưa con trỏ ra sau phần vừa chèn
+          const newCursorPosition = cursor.start + result.length;
+
+          input.focus();
+          input.setSelectionRange(
+            newCursorPosition,
+            newCursorPosition
+          );
 
           input.dispatchEvent(new Event("input"));
         };
@@ -1174,17 +1334,16 @@
           console.log("Speech recognition error: ", event.error);
         };
 
-        console.log("Starting recognition...");
         recognition.start();
       }
 
-      //hàm so sánh từ mà user nói vs từ gốc (tái sử dụng từ hàm check từ sai ở trên)
+      // Hàm so sánh từ mà user nói vs từ gốc (tái sử dụng từ hàm check từ sai ở trên)
       function checkPronunciation(index) {
         let original = sentences[index];
         let userSpeak = document.getElementById(`speech-input-${index}`).value;
         let feedbackDiv = document.getElementById(`pronunciation-feedback-${index}`);
 
-        //Hàm so sánh siêu ez
+        // Hàm so sánh siêu đơn giản
         if (userSpeak === original) {
           feedbackDiv.innerHTML = `<p class="success">${original}</p>`;
 
@@ -1192,29 +1351,29 @@
           // tránh người dùng thay đổi kết quả sau khi Check.
           document.getElementById(`speech-input-${index}`).disabled = true;       
         } else {
-          //tách câu gốc và câu người dùng nhập thành từng từ
+          // Tách câu gốc và câu người dùng nhập thành từng từ
           let originalWords = sentences[index].split(" ");
           let userWords = document.getElementById(`speech-input-${index}`).value.split(" ");
 
-          //mảng chứa kết quả sau khi căn chỉnh các từ
+          // Mảng chứa kết quả sau khi căn chỉnh các từ
           let adjustedUserWords = [];
 
-          //vị trí từ đang kiểm tra của người dùng
+          // Vị trí từ đang kiểm tra của người dùng
           let userIndex = 0;
 
-          //lưu kết quả để in ra giao diện
+          // Lưu kết quả để in ra giao diện
           let htmlResult = "";
           
-          //check lần 1 (chỉ thêm vô thôi và còn check lại lần 2)
+          // Check lần 1 (chỉ thêm vô thôi và còn check lại lần 2)
           for (let i = 0; i < originalWords.length; i++) {
             let originalWord = originalWords[i];
 
             let userWord = userWords[userIndex] || "";
 
             if (originalWords[i+1] && originalWords[i+1] === userWord) {
-              //Phát hiện user bỏ hoặc nói thiếu từ
+              // Phát hiện user bỏ hoặc nói thiếu từ
               adjustedUserWords.push("");
-              //Ko tăng userIndex để từ tiếp theo đc kiểm tra lại
+              // Không tăng userIndex để từ tiếp theo đc kiểm tra lại
             } else if (originalWord === userWord) {
               // Đúng → giữ lại
               adjustedUserWords.push(userWord);
@@ -1226,7 +1385,7 @@
             }
           };
 
-          //check lại lần 2 rồi in ra kết quả so sánh
+          // Check lại lần 2 rồi in ra kết quả so sánh
           adjustedUserWords.forEach((userWord, wordIndex) => { 
             let word = originalWords[wordIndex];
             let newUserWord = userWord;
@@ -1238,7 +1397,7 @@
               .toLowerCase()
               .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
 
-            //check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu \* 
+            // Check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu \* 
             if (newUserWord === "") { 
               htmlResult += `<span class="missing">${"*".repeat(word.length)}</span>`; 
             } else if (cleanUserWord === cleanWord) { 
@@ -1248,12 +1407,12 @@
             } 
           });
 
-          //hiển thị kết quả so sánh
+          // Hiển thị kết quả so sánh
           feedbackDiv.innerHTML = `<p>${htmlResult}</p>`;
         }
       }
       
-      //hàm nói lại khi bấm lại cái nút mic
+      // Hàm nói lại khi bấm lại cái nút mic
       function replayPronunciation(index) {
         const input = document.getElementById(`speech-input-${index}`);
         const feedback = document.getElementById(`pronunciation-feedback-${index}`);
@@ -1275,10 +1434,10 @@
 
 
       // ================================
-      // 8. NAVIGATION
+      // NAVIGATION
       // ================================
 
-      //hàm thay đổi nút tab khi đc chọn
+      // Hàm thay đổi nút tab khi đc chọn
       function setActiveTab(activeTab) {
         document.querySelectorAll(".tabs button")
           .forEach(button => button.classList.remove("active"));
@@ -1286,7 +1445,7 @@
         activeTab.classList.add("active");
       }
 
-      //tab create text
+      // Tab create text
       function createText() {
         document.getElementById("create-text-view").style.display = "block";
         document.getElementById("setup-view").style.display = "none";
@@ -1303,20 +1462,20 @@
 
 
       // ================================
-      // 9. CREATE TEXT / POPUP
+      // CREATE TEXT / POPUP
       // ================================
 
-      //hàm mở popup khi bấm vào nút dấu +
+      // Hàm mở popup khi bấm vào nút dấu +
       function openCreateTextPopup() {
         document.getElementById("create-text-popup").style.display = "flex";
       }
 
-      //hàm đóng popup khi bấm cancel
+      // Hàm đóng popup khi bấm cancel
       function closeCreateTextPopup() {
         document.getElementById("create-text-popup").style.display = "none";
       }
 
-      //hàm tạo text real
+      // Hàm tạo object
       function createNewText() {
         const name = document.getElementById("new-text-name").value.trim();
 
@@ -1333,19 +1492,19 @@
 
         texts.push(newText);
 
-        //Lưu toàn bộ texts vào localStorage
+        // Lưu toàn bộ objects vào localStorage
         localStorage.setItem("texts", JSON.stringify(texts));
 
-        //chọn text vừa tạo
+        // Chọn object vừa tạo
         currentTextId = newText.id;
         localStorage.setItem("currentTextId", currentTextId);
 
         renderTextList();
 
-        //đóng popup
+        // Đóng popup
         closeCreateTextPopup();
 
-        //chuyển qua setup-view
+        // Chuyển qua setup-view
         backToSetUpView();
 
         console.log(newText);
@@ -1356,10 +1515,10 @@
 
 
       // ================================
-      // 10. TEXT LIST
+      // TEXT LIST
       // ================================
 
-      //hàm danh sách cách text đã tạo
+      // Hàm danh sách cách text đã tạo
       function renderTextList() {
         let filteredTexts = texts;
         const textList = document.getElementById("text-list");
@@ -1371,10 +1530,10 @@
           text.name.toLowerCase().includes(keyword)
         );
         
-        //xóa danh sách cũ trước khi render lại
+        // Xóa danh sách cũ trước khi render lại
         textList.innerHTML = "";
 
-        //nếu chưa có text nào
+        // Nếu chưa có text nào
         if (texts.length === 0) {
           textList.innerHTML = `<p>No Text Yet</p>`;
           return;
@@ -1404,7 +1563,7 @@
           );
         }
 
-        //duyệt qua toàn bộ text object
+        // Duyệt qua toàn bộ text object
         filteredTexts.forEach(text => {
           textList.innerHTML += `
             <section class="text-item" onclick="openText(${text.id})">
@@ -1423,31 +1582,31 @@
         });
       }
 
-      //hàm nhảy qua setup-view nếu bấm vào section
+      // Hàm nhảy qua setup-view nếu bấm vào section
       function openText(id) {
         //chọn text
         currentTextId = id;
         localStorage.setItem("currentTextId", currentTextId);
 
-        //chuyển qua Setup View
+        // Chuyển qua Setup View
         backToSetUpView();
       }
 
-      //hàm xóa object (xóa text đã tạo)
+      // Hàm xóa object (xóa text đã tạo)
       function deleteText(id) {
-        //xóa object khỏi mảng
+        // Xóa object khỏi mảng
         texts = texts.filter(text => text.id !== id);
 
-        //cập nhật localStorage
+        // Cập nhật localStorage
         localStorage.setItem("texts", JSON.stringify(texts));
 
-        //xóa id object khi bấm vào thùng rác
+        // Xóa id object khi bấm vào thùng rác
         if (currentTextId == id) {
           currentTextId = null;
           localStorage.removeItem("currentTextId");
         }
 
-        //reder lại danh sách
+        // Reder lại danh sách
         renderTextList();
       }
 
