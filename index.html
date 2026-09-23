@@ -532,7 +532,7 @@
       <!--Chọn ngôn ngữ-->
       <label>Language:</label>
       <select id="language-select">
-        <option value="en-US">English-US</option>
+        <option value="en-US" selected>English-US</option>
         <option value="en-GB">English-UK</option>
         <option value="vi-VN">Vietnamese</option>
         <option value="es-ES">Spanish</option>
@@ -742,14 +742,26 @@
       // Sau đó đưa focus trở lại input để người dùng tiếp tục nhập.
       languageSelect.addEventListener("change", () => {
           localStorage.setItem("languageSelect", languageSelect.value);
-          //userInput.focus();
+          //userInput.focus(); => sai!
+          // Không dùng focus() trực tiếp ở đây vì trên mobile,
+          // nó làm <select> Language/Speed không mở được bảng chọn native.
+          // Desktop vẫn hoạt động bình thường nhưng mobile bị lỗi focus.
+          // => Đã bỏ focus() ở đây để ưu tiên khả năng chọn option trên mobile.
+
+          restoreInputFocus();
       });
 
       // Khi đổi tốc độ, lưu lại lựa chọn.
       // Sau đó đưa focus trở lại input.
       speedSelect.addEventListener("change", () => {
           localStorage.setItem("speedSelect", speedSelect.value);
-          //userInput.focus();
+          //userInput.focus(); => sai!
+          // Không dùng focus() trực tiếp ở đây vì trên mobile,
+          // nó làm <select> Language/Speed không mở được bảng chọn native.
+          // Desktop vẫn hoạt động bình thường nhưng mobile bị lỗi focus.
+          // => Đã bỏ focus() ở đây để ưu tiên khả năng chọn option trên mobile.
+          
+          restoreInputFocus();
       });
 
 
