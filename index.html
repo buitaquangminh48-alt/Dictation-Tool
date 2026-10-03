@@ -1031,80 +1031,71 @@
       // Kiểm tra câu có ghi đúng không
       function checkAnswer() {
         const currentText = getCurrentText();
-
         if (!currentText) return;
 
-        let userAns = document.getElementById("user-input").value.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-        let originalAns = sentences[currentText.currentIndex].trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+        let userRaw = document.getElementById("user-input").value.trim();
+        let originalRaw = sentences[currentText.currentIndex].trim();
         let feedbackDiv = document.getElementById("feedback");
 
-        // Hàm so sánh siêu đơn giản
-        if (userAns === originalAns) {
-          feedbackDiv.innerHTML = `<p class="success">${userAns}</p>`;
-          // Không cho người dùng nhập tiếp nữa khi đã bấm nút check (trừ khi bấm nút replay)
+        // Làm sạch chuỗi để so sánh tuyệt đối lúc đầu
+        const cleanStr = (str) => str.toLowerCase().replace(/[.,\/#!\$%\^&\*;:{}=\-_`~()]/g, "");
+
+        if (cleanStr(userRaw) === cleanStr(originalRaw)) {
+          feedbackDiv.innerHTML = `<p class="success">${userRaw}</p>`;
           document.getElementById("user-input").disabled = true;       
         } else {
-          // Tách câu gốc và câu người dùng nhập thành từng từ
-          let originalWords = sentences[currentText.currentIndex].split(" ");
-          let userWords = document.getElementById("user-input").value.split(" ");
+          // Tách mảng từ gốc (giữ nguyên hoa thường/dấu để in ra giao diện cho đẹp)
+          let originalWords = originalRaw.split(/\s+/);
+          let userWords = userRaw.split(/\s+/).filter(w => w !== "");
 
-          // Mảng chứa kết quả sau khi căn chỉnh các từ
-          let adjustedUserWords = [];
+          let n = originalWords.length;
+          let m = userWords.length;
 
-          // Vị trí từ đang kiểm tra của người dùng
-          let userIndex = 0;
+          // --- BƯỚC 1: XÂY DỰNG BẢNG QUY HOẠCH ĐỘNG (LCS) ---
+          // dp[i][j] lưu độ dài chuỗi từ chung dài nhất của i từ đầu câu gốc và j từ đầu câu user
+          let dp = Array(n + 1).fill().map(() => Array(m + 1).fill(0));
 
-          // Lưu kết quả để in ra giao diện
-          let htmlResult = "";
-          
-          // Check lần 1 (chỉ thêm vô thôi và còn check lại lần 2)
-          for (let i = 0; i < originalWords.length; i++) {
-            // Làm sạch câu gốc
-            let originalWord = originalWords[i].toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+          for (let i = 1; i <= n; i++) {
+            for (let j = 1; j <= m; j++) {
+              let cleanOrig = cleanStr(originalWords[i - 1]);
+              let cleanUser = cleanStr(userWords[j - 1]);
 
-            let userWord = userWords[userIndex] || "";
-            
-            // Làm sạch câu của người dùng
-            let cleanUserWord = userWord.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-
-            if (originalWords[i+1] && 
-                originalWords[i+1].toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "") === cleanUserWord) {
-              // Phát hiện user bỏ hoặc ghi thiếu từ
-              adjustedUserWords.push("");
-              // Không tăng userIndex để từ tiếp theo đc kiểm tra lại
-            } else if (originalWord === cleanUserWord) {
-              // Đúng → giữ lại
-              adjustedUserWords.push(userWord);
-              userIndex++;
-            } else {
-              // Sai → giữ lại luôn
-              adjustedUserWords.push(userWord);
-              userIndex++;
+              if (cleanOrig === cleanUser) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+              } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+              }
             }
-          };
+          }
 
-          // Check lại lần 2 rồi in ra kết quả so sánh
-          adjustedUserWords.forEach((userWord, index) => { 
-            let word = originalWords[index];
-            let cleanWord = word.toLowerCase().replace(/[.,**\\/**#!$%**\\^**&**\\\***;:{}=\\-\_\`\~()]/g,""); 
-            let cleanUserWord = userWord.toLowerCase().replace(/[.,**\\/**#!$%**\\^**&**\\\***;:{}=\\-\_\`\~()]/g,""); 
+          // --- BƯỚC 2: TRUY VẾT (TRACE BACK) ĐỂ TẠO HTML ---
+          let htmlResult = [];
+          let i = n, j = m;
 
-            // Check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu * 
-            if (cleanUserWord === "") { 
-              htmlResult += `<span class="missing">${"*".repeat(cleanWord.length)}</span>`; 
-            } else if (cleanWord === cleanUserWord) { 
-              htmlResult += `<span class="success"> ${userWord} </span>`; 
-            } else { 
-              htmlResult += `<span class="error"> ${userWord} </span>`; 
-            } 
-          });
+          // Đi ngược từ cuối ma trận về đầu
+          while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && cleanStr(originalWords[i - 1]) === cleanStr(userWords[j - 1])) {
+              // Đúng từ -> In màu xanh
+              htmlResult.unshift(`<span class="success">${userWords[j - 1]}</span>`);
+              i--; j--;
+            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+              // User gõ thừa từ hoặc từ này gõ sai hoàn toàn -> In màu đỏ
+              htmlResult.unshift(`<span class="error">${userWords[j - 1]}</span>`);
+              j--;
+            } else {
+              // User gõ thiếu từ -> Hiện dấu * dựa trên độ dài từ gốc
+              let cleanWord = cleanStr(originalWords[i - 1]);
+              htmlResult.unshift(`<span class="missing">${"*".repeat(cleanWord.length || 1)}</span>`);
+              i--;
+            }
+          }
 
           // Hiển thị kết quả so sánh
-          feedbackDiv.innerHTML = `<p>${htmlResult}</p>`;
-
-          speakCurrentSentence(); // Đọc lại câu để dò xem mình sai hoặc nghe thiếu ở đâu
+          feedbackDiv.innerHTML = `<p>${htmlResult.join(" ")}</p>`;
+          speakCurrentSentence(); 
         }
-      } 
+      }
+ 
 
       // Replay lại câu hiện tại đã viết
       function replaySentence() {
@@ -1358,78 +1349,75 @@
 
       // Hàm so sánh từ mà user nói vs từ gốc (tái sử dụng từ hàm check từ sai ở trên)
       function checkPronunciation(index) {
-        let original = sentences[index];
-        let userSpeak = document.getElementById(`speech-input-${index}`).value;
-        let feedbackDiv = document.getElementById(`pronunciation-feedback-${index}`);
+        let originalRaw = sentences[index];
+        
+        // Thay thế bằng cộng chuỗi truyền thống bằng dấu nháy kép, cực kỳ an toàn
+        let userInputElem = document.getElementById("speech-input-" + index);
+        
+        if (!userInputElem) return;
 
-        // Hàm so sánh siêu đơn giản
-        if (userSpeak === original) {
-          feedbackDiv.innerHTML = `<p class="success">${original}</p>`;
+        let userSpeakRaw = userInputElem.value.trim();
+        let feedbackDiv = document.getElementById("pronunciation-feedback-" + index);
 
-          // Nếu nói đúng toàn bộ câu thì khóa input,
-          // tránh người dùng thay đổi kết quả sau khi Check.
-          document.getElementById(`speech-input-${index}`).disabled = true;       
+        // Hàm làm sạch chuỗi: chuyển chữ thường, xóa tất cả dấu câu
+        const cleanStr = (str) => str.toLowerCase().replace(/[.,\/#!\$%\^&\*;:{}=\-_`~()]/g, "");
+
+        // Kiểm tra nếu user chưa nói gì
+        if (!userSpeakRaw) {
+          feedbackDiv.innerHTML = '<p style="color: orange;">Vui lòng bấm nói trước khi kiểm tra nhé!</p>';
+          return;
+        }
+
+        if (cleanStr(userSpeakRaw) === cleanStr(originalRaw)) {
+          feedbackDiv.innerHTML = '<p class="success">' + originalRaw + '</p>';
+          userInputElem.disabled = true;       
         } else {
-          // Tách câu gốc và câu người dùng nhập thành từng từ
-          let originalWords = sentences[index].split(" ");
-          let userWords = document.getElementById(`speech-input-${index}`).value.split(" ");
+          let originalWords = originalRaw.split(/\s+/).filter(w => w !== "");
+          let userWords = userSpeakRaw.split(/\s+/).filter(w => w !== "");
 
-          // Mảng chứa kết quả sau khi căn chỉnh các từ
-          let adjustedUserWords = [];
+          let n = originalWords.length;
+          let m = userWords.length;
 
-          // Vị trí từ đang kiểm tra của người dùng
-          let userIndex = 0;
+          // --- BƯỚC 1: XÂY DỰNG BẢNG QUY HOẠCH ĐỘNG (LCS) ---
+          let dp = Array(n + 1).fill().map(() => Array(m + 1).fill(0));
 
-          // Lưu kết quả để in ra giao diện
-          let htmlResult = "";
-          
-          // Check lần 1 (chỉ thêm vô thôi và còn check lại lần 2)
-          for (let i = 0; i < originalWords.length; i++) {
-            let originalWord = originalWords[i];
-
-            let userWord = userWords[userIndex] || "";
-
-            if (originalWords[i+1] && originalWords[i+1] === userWord) {
-              // Phát hiện user bỏ hoặc nói thiếu từ
-              adjustedUserWords.push("");
-              // Không tăng userIndex để từ tiếp theo đc kiểm tra lại
-            } else if (originalWord === userWord) {
-              // Đúng → giữ lại
-              adjustedUserWords.push(userWord);
-              userIndex++;
-            } else {
-              // Sai → giữ lại luôn
-              adjustedUserWords.push(userWord);
-              userIndex++;
+          for (let i = 1; i <= n; i++) {
+            for (let j = 1; j <= m; j++) {
+              if (cleanStr(originalWords[i - 1]) === cleanStr(userWords[j - 1])) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+              } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+              }
             }
-          };
+          }
 
-          // Check lại lần 2 rồi in ra kết quả so sánh
-          adjustedUserWords.forEach((userWord, wordIndex) => { 
-            let word = originalWords[wordIndex];
-            let newUserWord = userWord;
-            let cleanWord = word
-              .toLowerCase()
-              .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
+          // --- BƯỚC 2: TRUY VẾT TẠO KẾT QUẢ HIỂN THỊ ---
+          let htmlResult = [];
+          let i = n, j = m;
 
-            let cleanUserWord = newUserWord
-              .toLowerCase()
-              .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
+          while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && cleanStr(originalWords[i - 1]) === cleanStr(userWords[j - 1])) {
+              htmlResult.push('<span class="success">' + userWords[j - 1] + '</span>');
+              i--; j--;
+            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+              htmlResult.push('<span class="error">' + userWords[j - 1] + '</span>');
+              j--;
+            } else if (i > 0) {
+              let cleanWord = cleanStr(originalWords[i - 1]);
+              htmlResult.push('<span class="missing">' + "*".repeat(cleanWord.length || 1) + '</span>');
+              i--;
+            } else {
+              break;
+            }
+          }
 
-            // Check sai nếu đúng thì in ra xanh, sai in ra đỏ, thiếu in dấu \* 
-            if (newUserWord === "") { 
-              htmlResult += `<span class="missing">${"*".repeat(word.length)}</span>`; 
-            } else if (cleanUserWord === cleanWord) { 
-              htmlResult += `<span class="success"> ${newUserWord} </span>`; 
-            } else { 
-              htmlResult += `<span class="error"> ${newUserWord} </span>`; 
-            } 
-          });
+          // Vì unshift trong vòng lặp đôi khi gây chậm, mình dùng push rồi reverse lại cho chuẩn bài DSA
+          htmlResult.reverse();
 
-          // Hiển thị kết quả so sánh
-          feedbackDiv.innerHTML = `<p>${htmlResult}</p>`;
+          feedbackDiv.innerHTML = '<p>' + htmlResult.join(" ") + '</p>';
         }
       }
+
       
       // Hàm nói lại khi bấm lại cái nút mic
       function replayPronunciation(index) {
