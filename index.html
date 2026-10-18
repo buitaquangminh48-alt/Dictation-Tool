@@ -75,6 +75,17 @@
         color: grey;
       }
 
+      .extra {
+        color: #b45309;
+        background: #fef3c7;
+        border-radius: 3px;
+      }
+
+      .error,
+      .missing {
+        cursor: help;
+      }
+
       .outputText {
         color: black;
       }
@@ -1030,70 +1041,122 @@
 
       // Kiểm tra câu có ghi đúng không
       function checkAnswer() {
+
+        // --- BƯỚC 1: EDIT DISTANCE ---
         const currentText = getCurrentText();
         if (!currentText) return;
 
-        let userRaw = document.getElementById("user-input").value.trim();
-        let originalRaw = sentences[currentText.currentIndex].trim();
-        let feedbackDiv = document.getElementById("feedback");
+        const userRaw = document.getElementById("user-input").value.trim();
+        const originalRaw = sentences[currentText.currentIndex].trim();
+        const feedbackDiv = document.getElementById("feedback");
 
-        // Làm sạch chuỗi để so sánh tuyệt đối lúc đầu
-        const cleanStr = (str) => str.toLowerCase().replace(/[.,\/#!\$%\^&\*;:{}=\-_`~()]/g, "");
+        if (!userRaw) return;
+
+        const cleanStr = (str) =>
+          str.toLowerCase().replace(/[.,/#!$%^&*;:{}=_`~()]/g, "");
 
         if (cleanStr(userRaw) === cleanStr(originalRaw)) {
           feedbackDiv.innerHTML = `<p class="success">${userRaw}</p>`;
-          document.getElementById("user-input").disabled = true;       
-        } else {
-          // Tách mảng từ gốc (giữ nguyên hoa thường/dấu để in ra giao diện cho đẹp)
-          let originalWords = originalRaw.split(/\s+/);
-          let userWords = userRaw.split(/\s+/).filter(w => w !== "");
-
-          let n = originalWords.length;
-          let m = userWords.length;
-
-          // --- BƯỚC 1: XÂY DỰNG BẢNG QUY HOẠCH ĐỘNG (LCS) ---
-          // dp[i][j] lưu độ dài chuỗi từ chung dài nhất của i từ đầu câu gốc và j từ đầu câu user
-          let dp = Array(n + 1).fill().map(() => Array(m + 1).fill(0));
-
-          for (let i = 1; i <= n; i++) {
-            for (let j = 1; j <= m; j++) {
-              let cleanOrig = cleanStr(originalWords[i - 1]);
-              let cleanUser = cleanStr(userWords[j - 1]);
-
-              if (cleanOrig === cleanUser) {
-                dp[i][j] = dp[i - 1][j - 1] + 1;
-              } else {
-                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-              }
-            }
-          }
-
-          // --- BƯỚC 2: TRUY VẾT (TRACE BACK) ĐỂ TẠO HTML ---
-          let htmlResult = [];
-          let i = n, j = m;
-
-          // Đi ngược từ cuối ma trận về đầu
-          while (i > 0 || j > 0) {
-            if (i > 0 && j > 0 && cleanStr(originalWords[i - 1]) === cleanStr(userWords[j - 1])) {
-              // Đúng từ -> In màu xanh
-              htmlResult.unshift(`<span class="success">${userWords[j - 1]}</span>`);
-              i--; j--;
-            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-              // User gõ thừa từ hoặc từ này gõ sai hoàn toàn -> In màu đỏ
-              htmlResult.unshift(`<span class="error">${userWords[j - 1]}</span>`);
-              j--;
-            } else {
-              // User gõ thiếu từ -> Hiện dấu * dựa trên độ dài từ gốc
-              let cleanWord = cleanStr(originalWords[i - 1]);
-              htmlResult.unshift(`<span class="missing">${"*".repeat(cleanWord.length || 1)}</span>`);
-              i--;
-            }
-          }
-
-          // Hiển thị kết quả so sánh
-          feedbackDiv.innerHTML = `<p>${htmlResult.join(" ")}</p>`;
-          speakCurrentSentence(); 
+          document.getElementById("user-input").disabled = true;
+          return;
         }
+
+        const originalWords = originalRaw.split(/\s+/);
+        const userWords = userRaw.split(/\s+/).filter(w => w !== "");
+
+        const normalize = (str) =>
+          str.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+        const n = originalWords.length;
+        const m = userWords.length;
+        // dp[i][j] = chi phí nhỏ nhất để căn chỉnh i từ gốc
+        // với j từ người dùng
+        const dp = Array.from(
+          { length: n + 1 },
+          () => Array(m + 1).fill(0)
+        );
+        for (let i = 0; i <= n; i++) dp[i][0] = i;
+        for (let j = 0; j <= m; j++) dp[0][j] = j;
+        for (let i = 1; i <= n; i++) {
+          for (let j = 1; j <= m; j++) {
+            const a = normalize(originalWords[i - 1]);
+            const b = normalize(userWords[j - 1]);
+            const cost = a === b ? 0 : 1;
+            dp[i][j] = Math.min(
+              dp[i - 1][j] + 1,      // Thiếu từ gốc
+              dp[i][j - 1] + 1,      // Thừa từ người dùng
+              dp[i - 1][j - 1] + cost // Đúng hoặc thay thế
+            );
+          }
+        }
+        // --- BƯỚC 2: TRUY VẾT VÀ CĂN CHỈNH ---
+        const htmlResult = [];
+        let i = n;
+        let j = m;
+        // Escape nội dung trước khi đưa vào innerHTML
+        const escapeHTML = (str) =>
+          str.replace(/[&<>"']/g, (ch) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+          })[ch]);
+        while (i > 0 || j > 0) {
+          const a = i > 0
+            ? normalize(originalWords[i - 1])
+            : null;
+          const b = j > 0
+            ? normalize(userWords[j - 1])
+            : null;
+          // Ưu tiên khớp chính xác
+          if (
+            i > 0 && j > 0 &&
+            a === b &&
+            dp[i][j] === dp[i - 1][j - 1]
+          ) {
+            htmlResult.unshift(
+              `<span class="success">${escapeHTML(userWords[j - 1])}</span>`
+            );
+            i--;
+            j--;
+          }
+          // Hai từ khác nhau: căn chỉnh thành lỗi thay thế
+          else if (
+            i > 0 && j > 0 &&
+            dp[i][j] === dp[i - 1][j - 1] + 1
+          ) {
+            const expected = escapeHTML(originalWords[i - 1]);
+            const actual = escapeHTML(userWords[j - 1]);
+            htmlResult.unshift(
+              `<span class="error" title="Đáp án: ${expected}">${actual}</span>`
+            );
+            i--;
+            j--;
+          }
+          // Từ có trong bản gốc nhưng bị bỏ sót
+          else if (
+            i > 0 &&
+            dp[i][j] === dp[i - 1][j] + 1
+          ) {
+            const missingWord = normalize(originalWords[i - 1]);
+            htmlResult.unshift(
+              `<span class="missing" title="Thiếu: ${escapeHTML(originalWords[i - 1])}">${
+                "*".repeat(Math.max(1, missingWord.length))
+              }</span>`
+            );
+            i--;
+          }
+          // Từ thừa trong bản chép
+          else {
+            htmlResult.unshift(
+              `<span class="extra" title="Từ thừa">${escapeHTML(userWords[j - 1])}</span>`
+            );
+            j--;
+          }
+        }
+        feedbackDiv.innerHTML = `<p>${htmlResult.join(" ")}</p>`;
+        speakCurrentSentence();
+      
       }
  
 
@@ -1347,75 +1410,145 @@
         recognition.start();
       }
 
-      // Hàm so sánh từ mà user nói vs từ gốc (tái sử dụng từ hàm check từ sai ở trên)
+      // Hàm so sánh từ mà user nói vs từ gốc (tái sử dụng từ hàm check từ sai ở trên)      
       function checkPronunciation(index) {
-        let originalRaw = sentences[index];
-        
-        // Thay thế bằng cộng chuỗi truyền thống bằng dấu nháy kép, cực kỳ an toàn
-        let userInputElem = document.getElementById("speech-input-" + index);
-        
-        if (!userInputElem) return;
+        const originalRaw = sentences[index];
+        const userInputElem = document.getElementById("speech-input-" + index);
+        const feedbackDiv = document.getElementById("pronunciation-feedback-" + index);
 
-        let userSpeakRaw = userInputElem.value.trim();
-        let feedbackDiv = document.getElementById("pronunciation-feedback-" + index);
+        if (!userInputElem || !feedbackDiv) return;
 
-        // Hàm làm sạch chuỗi: chuyển chữ thường, xóa tất cả dấu câu
-        const cleanStr = (str) => str.toLowerCase().replace(/[.,\/#!\$%\^&\*;:{}=\-_`~()]/g, "");
+        const userSpeakRaw = userInputElem.value.trim();
 
-        // Kiểm tra nếu user chưa nói gì
+        // Chuẩn hóa từ: chữ thường, bỏ dấu câu
+        const normalize = (str) =>
+          str.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+
+        // Escape HTML trước khi hiển thị dữ liệu người dùng
+        const escapeHTML = (str) =>
+          str.replace(/[&<>"']/g, (ch) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+          })[ch]);
+
+        // Kiểm tra người dùng đã nhập nội dung chưa
         if (!userSpeakRaw) {
-          feedbackDiv.innerHTML = '<p style="color: orange;">Vui lòng bấm nói trước khi kiểm tra nhé!</p>';
+          feedbackDiv.innerHTML =
+            '<p style="color: orange;">Vui lòng bấm nói trước khi kiểm tra nhé!</p>';
           return;
         }
 
-        if (cleanStr(userSpeakRaw) === cleanStr(originalRaw)) {
-          feedbackDiv.innerHTML = '<p class="success">' + originalRaw + '</p>';
-          userInputElem.disabled = true;       
-        } else {
-          let originalWords = originalRaw.split(/\s+/).filter(w => w !== "");
-          let userWords = userSpeakRaw.split(/\s+/).filter(w => w !== "");
+        // Nếu toàn bộ câu chính xác
+        if (normalize(userSpeakRaw) === normalize(originalRaw)) {
+          feedbackDiv.innerHTML =
+            '<p class="success">' + escapeHTML(originalRaw) + '</p>';
 
-          let n = originalWords.length;
-          let m = userWords.length;
-
-          // --- BƯỚC 1: XÂY DỰNG BẢNG QUY HOẠCH ĐỘNG (LCS) ---
-          let dp = Array(n + 1).fill().map(() => Array(m + 1).fill(0));
-
-          for (let i = 1; i <= n; i++) {
-            for (let j = 1; j <= m; j++) {
-              if (cleanStr(originalWords[i - 1]) === cleanStr(userWords[j - 1])) {
-                dp[i][j] = dp[i - 1][j - 1] + 1;
-              } else {
-                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-              }
-            }
-          }
-
-          // --- BƯỚC 2: TRUY VẾT TẠO KẾT QUẢ HIỂN THỊ ---
-          let htmlResult = [];
-          let i = n, j = m;
-
-          while (i > 0 || j > 0) {
-            if (i > 0 && j > 0 && cleanStr(originalWords[i - 1]) === cleanStr(userWords[j - 1])) {
-              htmlResult.push('<span class="success">' + userWords[j - 1] + '</span>');
-              i--; j--;
-            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-              htmlResult.push('<span class="error">' + userWords[j - 1] + '</span>');
-              j--;
-            } else if (i > 0) {
-              let cleanWord = cleanStr(originalWords[i - 1]);
-              htmlResult.push('<span class="missing">' + "*".repeat(cleanWord.length || 1) + '</span>');
-              i--;
-            } else {
-              break;
-            }
-          }
-
-          // Vì unshift trong vòng lặp đôi khi gây chậm, mình dùng push rồi reverse lại cho chuẩn bài DSA
-          htmlResult.reverse();
-
-          feedbackDiv.innerHTML = '<p>' + htmlResult.join(" ") + '</p>';
+          userInputElem.disabled = true;
+          return;
         }
+
+        const originalWords = originalRaw.split(/\s+/).filter(w => w !== "");
+        const userWords = userSpeakRaw.split(/\s+/).filter(w => w !== "");
+
+        const n = originalWords.length;
+        const m = userWords.length;
+
+        // BƯỚC 1: Tạo bảng Edit Distance
+        const dp = Array.from(
+          { length: n + 1 },
+          () => Array(m + 1).fill(0)
+        );
+
+        for (let i = 0; i <= n; i++) dp[i][0] = i;
+        for (let j = 0; j <= m; j++) dp[0][j] = j;
+
+        for (let i = 1; i <= n; i++) {
+          for (let j = 1; j <= m; j++) {
+            const a = normalize(originalWords[i - 1]);
+            const b = normalize(userWords[j - 1]);
+            const cost = a === b ? 0 : 1;
+
+            dp[i][j] = Math.min(
+              dp[i - 1][j] + 1,       // Từ gốc bị thiếu
+              dp[i][j - 1] + 1,       // Từ người dùng nói thêm
+              dp[i - 1][j - 1] + cost // Đúng từ hoặc thay từ
+            );
+          }
+        }
+
+        // BƯỚC 2: Truy vết từ cuối về đầu
+        const htmlResult = [];
+        let i = n;
+        let j = m;
+
+        while (i > 0 || j > 0) {
+          const a = i > 0 ? normalize(originalWords[i - 1]) : null;
+          const b = j > 0 ? normalize(userWords[j - 1]) : null;
+
+          // Từ đúng
+          if (
+            i > 0 && j > 0 &&
+            a === b &&
+            dp[i][j] === dp[i - 1][j - 1]
+          ) {
+            htmlResult.push(
+              '<span class="success">' +
+              escapeHTML(userWords[j - 1]) +
+              '</span>'
+            );
+            i--;
+            j--;
+          }
+
+          // Từ sai: dùng từ người dùng đã nói, đáp án gốc ở tooltip
+          else if (
+            i > 0 && j > 0 &&
+            dp[i][j] === dp[i - 1][j - 1] + 1
+          ) {
+            htmlResult.push(
+              '<span class="error" title="Đáp án: ' +
+              escapeHTML(originalWords[i - 1]) + '">' +
+              escapeHTML(userWords[j - 1]) +
+              '</span>'
+            );
+            i--;
+            j--;
+          }
+
+          // Từ gốc bị thiếu
+          else if (
+            i > 0 &&
+            dp[i][j] === dp[i - 1][j] + 1
+          ) {
+            const cleanWord = normalize(originalWords[i - 1]);
+
+            htmlResult.push(
+              '<span class="missing" title="Thiếu: ' +
+              escapeHTML(originalWords[i - 1]) + '">' +
+              "*".repeat(Math.max(1, cleanWord.length)) +
+              '</span>'
+            );
+            i--;
+          }
+
+          // Từ thừa: nếu sau này muốn phân biệt, có thể thêm class extra
+          else {
+            htmlResult.push(
+              '<span class="error" title="Từ thừa">' +
+              escapeHTML(userWords[j - 1]) +
+              '</span>'
+            );
+            j--;
+          }
+        }
+
+        // Truy vết ngược nên đảo lại để hiển thị đúng thứ tự câu
+        htmlResult.reverse();
+
+        feedbackDiv.innerHTML = '<p>' + htmlResult.join(" ") + '</p>';
       }
 
       
